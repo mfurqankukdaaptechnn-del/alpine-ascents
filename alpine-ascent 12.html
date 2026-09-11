@@ -1,0 +1,2154 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Alpine Ascents — The Mountaineering Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+<style>
+
+:root{
+  --bg:#FFFFFF;              
+  --bg-alt:#F5F5F7;          
+  --bg-card:rgba(255,255,255,0.66);     
+  --glass-border:rgba(15,25,35,0.08);
+  --ink:#0B1A24;             
+  --muted:#5B6570;           
+  --muted-dim:#8A929B;       
+  --accent:#B5121B;         
+  --accent-soft:#8F0F17;
+  --accent2:#0B5FA5;         
+  --line:rgba(11,26,36,0.09);
+  --line-strong:rgba(11,26,36,0.18);
+  --shadow: 0 20px 45px rgba(11,26,36,0.10);
+  --radius: 12px;
+  --radius-glass: 22px;
+  --header-bg: rgba(255,255,255,0.72);
+}
+html[data-theme="dark"]{
+  --bg:#0B1116; --bg-alt:#12191F; --bg-card:rgba(20,28,34,0.66);
+  --glass-border:rgba(255,255,255,0.09); --ink:#EAF1F5; --muted:#9BA7B1; --muted-dim:#6E7A83;
+  --accent:#FF5A63; --accent-soft:#FF7A82; --accent2:#4FA8F0;
+  --line:rgba(255,255,255,0.09); --line-strong:rgba(255,255,255,0.20);
+  --shadow:0 20px 45px rgba(0,0,0,0.45);
+  --header-bg: rgba(20,28,34,0.72);
+}
+/* "Default" mode: colors are driven by data-theme-resolved, which JS sets from the
+   device/OS light-dark preference, falling back to local time of day when the
+   device reports no preference. This covers dark/light switching reliably even
+   in browsers that don't support prefers-color-scheme. */
+html[data-theme="auto"][data-theme-resolved="dark"]{
+  --bg:#0B1116; --bg-alt:#12191F; --bg-card:rgba(20,28,34,0.66);
+  --glass-border:rgba(255,255,255,0.09); --ink:#EAF1F5; --muted:#9BA7B1; --muted-dim:#6E7A83;
+  --accent:#FF5A63; --accent-soft:#FF7A82; --accent2:#4FA8F0;
+  --line:rgba(255,255,255,0.09); --line-strong:rgba(255,255,255,0.20);
+  --shadow:0 20px 45px rgba(0,0,0,0.45);
+  --header-bg: rgba(20,28,34,0.72);
+}
+html{transition:background .25s ease;}
+body{transition:background .25s ease, color .25s ease;}
+header, .mtn-card, .vr-viewer, .gal-tile, .btn-ghost, .visitor-badge{transition:background .25s ease, color .25s ease, border-color .25s ease;}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:'Poppins',-apple-system,BlinkMacSystemFont,sans-serif; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  position:relative; overflow-x:hidden;
+}
+body::before,body::after{
+  content:""; position:fixed; z-index:0; border-radius:50%; pointer-events:none;
+  filter:blur(110px); opacity:.16;
+}
+body::before{ width:520px; height:520px; top:-160px; right:-120px; background:var(--accent2); }
+body::after{ width:600px; height:600px; bottom:-220px; left:-160px; background:var(--accent); }
+header,main,footer{position:relative; z-index:1;}
+h1,h2,h3,h4{font-family:'Poppins',serif; font-weight:600; margin:0 0 .4em; letter-spacing:-0.01em;}
+.mono{font-family:'Poppins',sans-serif; font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+img,svg{display:block; max-width:100%;}
+::selection{background:var(--accent); color:#fff;}
+:focus-visible{outline:2px solid var(--accent2); outline-offset:3px;}
+@media (prefers-reduced-motion: reduce){ *{animation-duration:.001ms !important; transition-duration:.001ms !important;} }
+
+.wrap{max-width:1180px; margin:0 auto; padding:0 28px;}
+.eyebrow{font-family:'Poppins',sans-serif; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent-soft);}
+.contours{position:absolute; inset:0; z-index:1; opacity:.35; pointer-events:none;}
+.contours svg{width:100%; height:100%;}
+
+.wordcloud{
+  position:relative; z-index:2; display:flex; flex-wrap:wrap; align-items:baseline; justify-content:center;
+  gap:9px 22px; padding:34px 8%; overflow:hidden; background:var(--bg-alt); border-bottom:1px solid var(--line);
+}
+.wordcloud span{font-family:'Poppins',sans-serif; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; line-height:1;}
+.wordcloud .w-hero{font-family:'Poppins',sans-serif; font-weight:700; font-size:clamp(26px,4.4vw,46px); color:var(--accent); letter-spacing:-.01em; text-transform:none;}
+.wordcloud .w-1{font-size:19px; color:var(--accent-soft); font-weight:700;}
+.wordcloud .w-2{font-size:13.5px; color:var(--muted);}
+.wordcloud .w-3{font-size:11.5px; color:var(--muted-dim);}
+@media(max-width:720px){ .wordcloud .w-3{display:none;} .wordcloud{padding:26px 6%; gap:8px 14px;} }
+header{
+  position:sticky; top:0; z-index:100;
+  background:var(--header-bg); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--glass-border);
+}
+.nav-row{display:flex; align-items:center; justify-content:space-between; min-height:72px; padding:12px 0;}
+.brand{display:flex; align-items:center; gap:10px; font-family:'Poppins',sans-serif; font-size:20px; font-weight:700; letter-spacing:-.02em; text-decoration:none; color:var(--ink); cursor:pointer; transition:opacity .2s ease; line-height:1.15;}
+.brand:hover{opacity:.82;}
+.brand svg{width:30px; height:30px; flex-shrink:0;}
+.brand .sub{font-family:'Poppins',sans-serif; font-size:10px; color:var(--muted); letter-spacing:.1em; display:block; font-weight:400; line-height:1.5; margin-top:3px;}
+.nav-right{display:flex; align-items:center; gap:22px;}
+nav.menu{display:flex; gap:2px; flex-wrap:wrap;}
+nav.menu a{
+  position:relative; padding:10px 14px; font-family:'Poppins',sans-serif; font-size:12.5px; font-weight:700; text-decoration:none;
+  color:var(--ink); border-radius:var(--radius); transition:color .25s ease, background .25s ease;
+  letter-spacing:.09em; text-transform:uppercase;
+}
+nav.menu a:hover{color:var(--accent-soft); background:rgba(181,18,27,0.08);}
+nav.menu a.active{color:var(--ink); background:rgba(11,95,165,0.14);}
+nav.menu a.active::after{
+  content:""; position:absolute; left:14px; right:14px; bottom:5px; height:2px; background:var(--accent2);
+}
+.visitor-badge{
+  font-family:'Poppins',sans-serif; font-size:11.5px; color:var(--muted);
+  border:1px solid var(--line-strong); padding:6px 10px; border-radius:var(--radius);
+  display:flex; align-items:center; gap:6px; white-space:nowrap;
+}
+.visitor-badge b{color:var(--ink); font-weight:700;}
+.dot-live{width:6px; height:6px; border-radius:50%; background:var(--accent2); box-shadow:0 0 0 0 rgba(11,95,165,.6); animation:pulse 2s infinite;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(11,95,165,.55);} 70%{box-shadow:0 0 0 7px rgba(11,95,165,0);} 100%{box-shadow:0 0 0 0 rgba(11,95,165,0);}}
+.menu-toggle{display:none; background:none; border:1px solid var(--line-strong); color:var(--ink); padding:8px 10px; border-radius:var(--radius); cursor:pointer;}
+
+.theme-toggle{
+  display:flex; align-items:center; gap:7px; font-family:'Poppins',sans-serif; font-size:11.5px; font-weight:600;
+  color:var(--ink); background:var(--bg-card); border:1px solid var(--line-strong); padding:7px 12px;
+  border-radius:20px; cursor:pointer; white-space:nowrap; transition:border-color .2s ease, background .2s ease;
+}
+.theme-toggle:hover{border-color:var(--accent2);}
+.theme-icon{width:14px; height:14px; display:inline-flex; align-items:center; justify-content:center;}
+.theme-icon svg{width:14px; height:14px; display:block;}
+@media(max-width:900px){ .theme-label{display:none;} .theme-toggle{padding:8px; border-radius:50%;} }
+nav.menu button.nav-search-btn{
+  display:inline-flex; align-items:center; gap:7px;
+  position:relative; padding:10px 14px; font-family:'Poppins',sans-serif; font-size:12.5px; font-weight:700;
+  color:var(--ink); background:none; border:none; border-radius:var(--radius); cursor:pointer;
+  letter-spacing:.09em; text-transform:uppercase; transition:color .25s ease, background .25s ease;
+}
+nav.menu button.nav-search-btn:hover{color:var(--accent-soft); background:rgba(181,18,27,0.08);}
+nav.menu button.nav-search-btn svg{width:14px; height:14px; flex-shrink:0;}
+nav.menu button.nav-search-btn .kbd{
+  font-family:'Poppins',sans-serif; font-size:9.5px; font-weight:600; letter-spacing:0; text-transform:none;
+  color:var(--muted-dim); border:1px solid var(--line-strong); border-radius:5px; padding:1px 5px; margin-left:2px;
+}
+@media(max-width:900px){ nav.menu button.nav-search-btn .kbd{display:none;} }
+
+.search-overlay{
+  position:fixed; inset:0; z-index:300; display:none;
+  background:rgba(6,12,18,0.55); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  padding:10vh 20px 20px; overflow-y:auto;
+}
+.search-overlay.open{display:block; animation:searchFadeIn .18s ease;}
+@keyframes searchFadeIn{from{opacity:0;} to{opacity:1;}}
+.search-panel{
+  max-width:640px; margin:0 auto; background:var(--bg-card); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--glass-border); border-radius:var(--radius-glass); box-shadow:var(--shadow); overflow:hidden;
+  animation:searchDrop .22s cubic-bezier(.2,.8,.3,1);
+}
+@keyframes searchDrop{from{opacity:0; transform:translateY(-10px);} to{opacity:1; transform:translateY(0);}}
+.search-field-row{display:flex; align-items:center; gap:12px; padding:18px 22px; border-bottom:1px solid var(--line);}
+.search-field-row svg{width:19px; height:19px; color:var(--muted); flex-shrink:0;}
+#siteSearchInput{
+  flex:1; border:none; outline:none; background:none; color:var(--ink);
+  font-family:'Poppins',sans-serif; font-size:16px; font-weight:500;
+}
+#siteSearchInput::placeholder{color:var(--muted-dim); font-weight:400;}
+.search-close-btn{
+  background:none; border:1px solid var(--line-strong); color:var(--muted); border-radius:8px; cursor:pointer;
+  font-family:'Poppins',sans-serif; font-size:11px; font-weight:600; padding:5px 9px; flex-shrink:0;
+}
+.search-close-btn:hover{border-color:var(--accent2); color:var(--accent2);}
+.search-results{max-height:58vh; overflow-y:auto; padding:10px;}
+.search-hint, .search-empty{
+  padding:30px 20px; text-align:center; color:var(--muted); font-family:'Poppins',sans-serif; font-size:13.5px;
+}
+.search-result{
+  display:flex; align-items:flex-start; gap:12px; padding:12px 12px; border-radius:12px; cursor:pointer;
+  text-align:left; width:100%; background:none; border:none; transition:background .15s ease;
+}
+.search-result:hover, .search-result.active{background:rgba(11,95,165,0.10);}
+.search-result .sr-icon{
+  width:34px; height:34px; border-radius:9px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  background:rgba(11,95,165,0.12); color:var(--accent2); font-size:15px;
+}
+.search-result .sr-body{min-width:0; flex:1;}
+.search-result .sr-title{font-family:'Poppins',sans-serif; font-size:14px; font-weight:600; color:var(--ink); margin:0 0 2px;}
+.search-result .sr-title mark, .search-result .sr-snippet mark{background:rgba(181,18,27,0.22); color:var(--accent-soft); border-radius:3px; padding:0 1px;}
+.search-result .sr-snippet{font-family:'Poppins',sans-serif; font-size:12.5px; color:var(--muted); margin:0; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;}
+.search-result .sr-tag{font-family:'Poppins',sans-serif; font-size:9.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted-dim); margin-top:4px; display:block;}
+.search-group-label{font-family:'Poppins',sans-serif; font-size:10.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--muted-dim); padding:12px 12px 4px;}
+.search-panel-footer{display:flex; gap:16px; padding:10px 22px; border-top:1px solid var(--line); font-family:'Poppins',sans-serif; font-size:11px; color:var(--muted-dim);}
+.search-panel-footer span{display:flex; align-items:center; gap:5px;}
+.search-panel-footer .kbd{border:1px solid var(--line-strong); border-radius:5px; padding:1px 6px; font-weight:600; color:var(--muted);}
+@keyframes searchFlash{0%{box-shadow:0 0 0 0 rgba(181,18,27,0);} 30%{box-shadow:0 0 0 6px rgba(181,18,27,0.25);} 100%{box-shadow:0 0 0 0 rgba(181,18,27,0);}}
+.search-flash{animation:searchFlash 1.6s ease;}
+@media(max-width:640px){ .search-overlay{padding:8vh 12px 12px;} .search-field-row{padding:14px 16px;} #siteSearchInput{font-size:15px;} }
+
+main{position:relative;}
+.page{display:none; padding:64px 0 96px; animation:fadein .5s ease;}
+.page.visible{display:block;}
+@keyframes fadein{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+.fading-out{animation:fadeout .28s ease forwards;}
+@keyframes fadeout{to{opacity:0; transform:translateY(-6px);}}
+.hero{
+  position:relative; overflow:hidden; padding:150px 0 110px; min-height:78vh; display:flex; align-items:center;
+  border-bottom:1px solid var(--line); background:#040A10;
+}
+.hero-video-wrap{position:absolute; inset:0; z-index:0; overflow:hidden;}
+.hero-video-wrap video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 38%;}
+.hero-video-wrap::after{
+  content:""; position:absolute; inset:0;
+  background:
+    linear-gradient(180deg, rgba(4,10,16,.55) 0%, rgba(4,10,16,.35) 40%, rgba(4,10,16,.82) 100%),
+    linear-gradient(90deg, rgba(4,10,16,.55) 0%, rgba(4,10,16,.05) 45%);
+}
+.hero .wrap{position:relative; z-index:2;}
+.hero .eyebrow{margin-bottom:18px; color:#9FD3FF;}
+.hero h1{font-size:clamp(40px,6vw,74px); max-width:820px; line-height:1.02; color:#fff;}
+.hero h1 em{font-style:normal; color:#7FC4FF;}
+.hero p.lead{max-width:560px; color:rgba(255,255,255,.82); font-size:17px; margin-top:20px;}
+.hero-cta{display:flex; gap:14px; margin-top:34px; flex-wrap:wrap;}
+.btn{
+  display:inline-flex; align-items:center; gap:8px; padding:13px 26px; border-radius:980px;
+  font-size:14px; font-weight:600; text-decoration:none; cursor:pointer; border:1px solid transparent;
+  transition:transform .2s ease, background .2s ease, border-color .2s ease, opacity .2s ease;
+}
+.btn:hover{transform:translateY(-2px);}
+.btn-primary{background:var(--accent2); color:#fff;}
+.btn-primary:hover{opacity:.88;}
+.btn-ghost{border-color:var(--line-strong); color:var(--ink); background:rgba(255,255,255,0.5); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);}
+.btn-ghost:hover{border-color:var(--accent2); color:var(--accent2);}
+.hero-cta .btn-ghost{border-color:rgba(255,255,255,.55); color:#fff; background:rgba(255,255,255,0.12);}
+.hero-cta .btn-ghost:hover{border-color:#fff; color:#fff; background:rgba(255,255,255,.22);}
+.hero-stats{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; margin-top:64px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.22); border-radius:var(--radius-glass); overflow:hidden; backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); box-shadow:0 20px 45px rgba(0,0,0,.35);}
+.hero-stats div{background:rgba(8,16,24,.42); padding:20px 18px;}
+.hero-stats .num{font-family:'Poppins',sans-serif; font-size:26px; font-weight:700; color:#7FC4FF;}
+.hero-stats .lbl{font-size:12px; color:rgba(255,255,255,.72); margin-top:4px;}
+
+.page-video-band{position:relative; width:100%; height:clamp(200px,26vw,320px); overflow:hidden; background:#040A10;}
+.page-video-band .pvb-embed{position:absolute; inset:0; overflow:hidden;}
+.page-video-band .pvb-embed video{
+  position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 40%; pointer-events:none;
+}
+.page-video-band::after{
+  content:""; position:absolute; inset:0; z-index:1;
+  background:linear-gradient(180deg, rgba(4,10,16,.28) 0%, rgba(4,10,16,.12) 45%, rgba(4,10,16,.88) 100%);
+}
+.pvb-tag{
+  position:absolute; z-index:2; left:28px; bottom:46px;
+  font-family:'Poppins',sans-serif; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+  padding:4px 11px; border-radius:20px; white-space:nowrap; transition:opacity .2s ease;
+}
+.pvb-tag.pk{color:#7CFFB0; background:rgba(20,200,110,.18); border:1px solid rgba(20,200,110,.45);}
+.pvb-tag.world{color:#7FC4FF; background:rgba(11,95,165,.24); border:1px solid rgba(11,95,165,.5);}
+.pvb-caption{position:absolute; z-index:2; left:28px; bottom:18px; right:28px;
+  font-family:'Poppins',sans-serif; font-size:13px; color:rgba(255,255,255,.9); font-weight:500;}
+@media(max-width:720px){
+  .page-video-band{height:190px;}
+  .pvb-tag{bottom:38px; left:16px;}
+  .pvb-caption{left:16px; right:16px; font-size:12px;}
+}
+
+.sec-head{max-width:640px; margin-bottom:44px;}
+.sec-head h2{font-size:clamp(28px,3.4vw,40px);}
+.sec-head p{color:var(--muted); font-size:15.5px;}
+
+.pillbar{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:36px; border-bottom:1px solid var(--line); padding-bottom:18px;}
+.pillbar button{
+  font-family:'Poppins',sans-serif; font-size:13px; font-weight:600; color:var(--muted);
+  background:transparent; border:1px solid var(--line-strong); padding:9px 16px; border-radius:20px; cursor:pointer;
+  transition:all .25s ease;
+}
+.pillbar button:hover{color:var(--ink); border-color:var(--accent-soft);}
+.pillbar button.active{background:var(--accent); border-color:var(--accent); color:#fff;}
+.subpane{display:none; animation:fadein .4s ease;}
+.subpane.visible{display:block;}
+
+.two-col{display:grid; grid-template-columns:1.1fr .9fr; gap:48px; align-items:start;}
+.two-col.rev{grid-template-columns:.9fr 1.1fr;}
+.card{background:var(--bg-card); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid var(--glass-border); border-radius:var(--radius-glass); padding:24px; box-shadow:var(--shadow);}
+.icon-tile{width:46px; height:46px; border-radius:var(--radius); background:rgba(181,18,27,0.12); display:flex; align-items:center; justify-content:center; margin-bottom:14px;}
+.icon-tile svg{width:24px; height:24px; stroke:var(--accent-soft);}
+
+
+.timeline{position:relative; padding-left:26px; border-left:2px solid var(--line);}
+.tl-item{position:relative; padding-bottom:34px;}
+.tl-item:last-child{padding-bottom:0;}
+.tl-item::before{content:""; position:absolute; left:-32px; top:4px; width:11px; height:11px; border-radius:50%; background:var(--accent); border:3px solid var(--bg);}
+.tl-item .yr{font-family:'Poppins',sans-serif; color:var(--accent-soft); font-size:13px; font-weight:700;}
+.tl-item h4{margin:4px 0 6px; font-size:18px;}
+.tl-item p{color:var(--muted); font-size:14.5px; margin:0;}
+
+.grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:20px;}
+.grid2{display:grid; grid-template-columns:repeat(2,1fr); gap:20px;}
+.feat-card{background:var(--bg-card); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid var(--glass-border); padding:22px; border-radius:var(--radius-glass); box-shadow:var(--shadow); transition:border-color .25s ease, transform .25s ease;}
+.feat-card:hover{border-color:var(--accent2); transform:translateY(-3px);}
+.feat-card h4{font-size:16.5px; margin-bottom:8px;}
+.feat-card p{font-size:14px; color:var(--muted); margin:0;}
+.tag{display:inline-block; font-family:'Poppins',sans-serif; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent2); border:1px solid rgba(11,95,165,.35); padding:3px 8px; border-radius:20px; margin-bottom:10px;}
+.tag.danger{color:var(--accent-soft); border-color:rgba(181,18,27,.4);}
+
+.records-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:18px;}
+.record-card{background:var(--bg-card); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid var(--glass-border); padding:22px; border-radius:var(--radius-glass); box-shadow:var(--shadow); position:relative; overflow:hidden;}
+.record-card .big{font-family:'Poppins',sans-serif; font-size:30px; color:var(--accent2); font-weight:700;}
+.record-card .lbl{font-size:12.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-top:2px;}
+.record-card p{font-size:13.5px; color:var(--muted); margin-top:10px;}
+
+.mtn-controls{display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:26px;}
+.mtn-controls input, .mtn-controls select{
+  background:var(--bg-card); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1px solid var(--line-strong); color:var(--ink); padding:10px 14px;
+  border-radius:14px; font-family:'Poppins',sans-serif; font-size:13.5px;
+}
+.mtn-controls input{flex:1; min-width:200px;}
+.region-toggle{display:flex; gap:6px;}
+.region-toggle button{
+  padding:10px 16px; border-radius:var(--radius); border:1px solid var(--line-strong); background:transparent;
+  color:var(--muted); font-weight:600; font-size:13px; cursor:pointer; transition:all .2s ease;
+}
+.region-toggle button.active{background:var(--accent2); border-color:var(--accent2); color:#fff;}
+
+.vr-viewer{
+  position:relative; height:260px; border-radius:var(--radius-glass); overflow:hidden;
+  margin-bottom:32px; border:1px solid var(--glass-border); box-shadow:var(--shadow);
+  background:#0B1A24; cursor:grab;
+}
+.vr-viewer:active{cursor:grabbing;}
+.vr-layer{position:absolute; inset:-8% -12%; width:124%; height:116%; will-change:transform;}
+.vr-layer svg{width:100%; height:100%; display:block;}
+
+.vr-layer-photo{position:absolute; inset:0; width:100%; height:100%; perspective:900px; overflow:hidden;}
+.vr-layer-photo img{width:100%; height:100%; object-fit:cover; object-position:center; display:block; transform-style:preserve-3d;}
+.vr-badge{
+  position:absolute; z-index:5; left:16px; top:14px; font-family:'Poppins',sans-serif; font-size:10.5px; font-weight:700;
+  letter-spacing:.06em; text-transform:uppercase; color:#fff; background:rgba(8,16,24,.68);
+  border:1px solid rgba(255,255,255,.28); padding:5px 12px; border-radius:20px; max-width:80%;
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); text-shadow:0 1px 2px rgba(0,0,0,.4);
+}
+.vr-hint{
+  position:absolute; z-index:5; right:16px; bottom:14px; font-family:'Poppins',sans-serif; font-size:11px; font-weight:600;
+  color:#fff; background:rgba(8,16,24,.55); border:1px solid rgba(255,255,255,.28); padding:6px 12px; border-radius:20px;
+  backdrop-filter:blur(8px); pointer-events:none;
+}
+@media(max-width:720px){ .vr-viewer{height:200px;} .vr-badge{font-size:9.5px; padding:4px 10px;} .vr-hint{font-size:10px; right:12px; bottom:10px;} }
+
+.vr-motion-btn{
+  position:absolute; z-index:6; left:16px; bottom:14px; display:flex; align-items:center; gap:6px;
+  font-family:'Poppins',sans-serif; font-size:11px; font-weight:600; color:#fff;
+  background:rgba(8,16,24,.62); border:1px solid rgba(255,255,255,.3); padding:6px 12px; border-radius:20px;
+  cursor:pointer; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); transition:background .2s ease;
+}
+.vr-motion-btn:hover{background:rgba(8,16,24,.82);}
+.vr-motion-btn svg{width:12px; height:12px; display:block;}
+.vr-motion-layer{position:absolute; inset:0; z-index:4; pointer-events:none; overflow:hidden;}
+.vr-bird{position:absolute; opacity:0; width:22px; height:auto;}
+.vr-water{position:absolute; left:0; right:0; bottom:0; height:26%; pointer-events:none;
+  background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.35) 50%, rgba(255,255,255,0) 100%);
+  background-size:220% 100%; opacity:0;
+}
+.vr-mist{position:absolute; left:-20%; right:-20%; bottom:8%; height:16%; pointer-events:none;
+  background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.5) 50%, rgba(255,255,255,0) 100%);
+  filter:blur(6px); opacity:0;}
+.vr-viewer.vr-live .vr-bird{opacity:.92; animation:vrBirdFly linear infinite;}
+.vr-viewer.vr-live .vr-water{opacity:1; animation:vrWaterFlow 3.4s linear infinite;}
+.vr-viewer.vr-live .vr-mist{opacity:.55; animation:vrMistDrift 14s ease-in-out infinite;}
+.vr-viewer.vr-live .vr-layer-photo img{animation:vrPhotoPan 16s ease-in-out infinite alternate;}
+@keyframes vrBirdFly{
+  0%{ transform:translate(-10%, 6px) scale(.9); }
+  50%{ transform:translate(50%, -10px) scale(1); }
+  100%{ transform:translate(120%, 4px) scale(.9); }
+}
+@keyframes vrWaterFlow{ 0%{background-position:0% 0;} 100%{background-position:-220% 0;} }
+@keyframes vrMistDrift{ 0%{transform:translateX(-4%);} 50%{transform:translateX(4%);} 100%{transform:translateX(-4%);} }
+@keyframes vrPhotoPan{ 0%{transform:scale(1.03) translate(0,0);} 100%{transform:scale(1.11) translate(-1.5%, -1%);} }
+@media(prefers-reduced-motion: reduce){
+  .vr-viewer.vr-live .vr-bird, .vr-viewer.vr-live .vr-water, .vr-viewer.vr-live .vr-mist, .vr-viewer.vr-live .vr-layer-photo img{animation:none !important;}
+}
+
+.mtn-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:18px;}
+.mtn-card{
+  background:var(--bg-card); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid var(--glass-border); border-radius:var(--radius-glass); box-shadow:var(--shadow); overflow:hidden;
+  transition:transform .25s ease, border-color .25s ease; cursor:pointer;
+  display:block; text-decoration:none; color:inherit;
+}
+.mtn-card:hover{transform:translateY(-4px); border-color:var(--accent-soft);}
+.mtn-art{height:150px; position:relative; overflow:hidden; border-bottom:1px solid var(--line); background:var(--bg-alt);}
+.mtn-art svg{width:100%; height:100%;}
+.mtn-rank{position:absolute; top:10px; left:10px; font-family:'Poppins',sans-serif; font-size:11px; background:rgba(11,27,43,.75); color:var(--accent-soft); padding:3px 8px; border-radius:20px; border:1px solid rgba(181,18,27,.4);}
+.mtn-body{padding:16px 18px 18px;}
+.mtn-body h4{font-size:16.5px; margin-bottom:2px;}
+.mtn-body .loc{font-size:12.5px; color:var(--muted-dim); margin-bottom:10px;}
+.mtn-body .stat-row{display:flex; justify-content:space-between; font-family:'Poppins',sans-serif; font-size:12.5px; color:var(--accent2); border-top:1px solid var(--line); padding-top:10px;}
+.mtn-body p.blurb{font-size:13px; color:var(--muted); margin:10px 0 0;}
+.explore-link{display:inline-block; margin-top:10px; font-size:12.5px; font-weight:700; color:var(--accent-soft); text-decoration:none; border-bottom:1px solid transparent;}
+.mtn-card:hover .explore-link{border-color:var(--accent-soft);}
+
+.modal-art{height:150px; border-bottom:1px solid var(--line); border-radius:var(--radius); overflow:hidden;}
+.modal-art svg{width:100%; height:100%;}
+.modal-stats{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:16px 0; font-family:'Poppins',sans-serif; font-size:12px;}
+.modal-stats div{background:var(--bg); border:1px solid var(--line); padding:8px 10px; border-radius:var(--radius);}
+.modal-stats .k{color:var(--muted-dim); display:block; font-size:10px; text-transform:uppercase; letter-spacing:.06em;}
+.modal-stats .v{color:var(--ink); font-weight:700;}
+
+
+#map{height:430px; width:100%; border-radius:var(--radius); border:1px solid var(--line); filter:grayscale(.15) contrast(1.05);}
+.club-list{display:flex; flex-direction:column; gap:14px; max-height:430px; overflow:auto; padding-right:6px;}
+.club-item{background:var(--bg-card); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid var(--glass-border); padding:16px 18px; border-radius:var(--radius-glass); box-shadow:var(--shadow); cursor:pointer; transition:border-color .2s ease;}
+.club-item:hover, .club-item.active{border-color:var(--accent2);}
+.club-item h4{font-size:15px; margin-bottom:3px;}
+.club-item .city{font-size:12px; color:var(--muted-dim); font-family:'Poppins',sans-serif;}
+.club-item p{font-size:12.5px; color:var(--muted); margin:8px 0 0;}
+.story-box{margin-top:40px; padding:26px; background:linear-gradient(135deg, rgba(11,95,165,.08), rgba(181,18,27,.05)); border:1px solid var(--line); border-radius:var(--radius);}
+
+.gal-tabs{display:flex; gap:8px; margin-bottom:22px; flex-wrap:wrap;}
+.gal-tabs button{background:transparent; border:1px solid var(--line-strong); color:var(--muted); padding:8px 14px; border-radius:20px; font-size:12.5px; font-weight:600; cursor:pointer;}
+.gal-tabs button.active{background:var(--accent2); color:#fff; border-color:var(--accent2);}
+.gal-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px;}
+.gal-tile{aspect-ratio:4/3; border-radius:var(--radius); overflow:hidden; position:relative; border:1px solid var(--line);}
+.gal-photo{position:absolute; inset:0; width:100%; height:100%;}
+.gal-photo .gal-bg{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:blur(22px) brightness(0.55) saturate(1.1); transform:scale(1.2); display:block;}
+.gal-photo .gal-fg{position:relative; width:100%; height:100%; object-fit:contain; object-position:center; display:block;}
+.gal-tile svg{width:100%; height:100%;}
+.gal-tile .cap{position:absolute; left:0; right:0; bottom:0; padding:10px 12px; background:linear-gradient(to top, rgba(0,0,0,.75), transparent); font-size:12px; font-weight:600;}
+.gal-tile[data-cat]{display:none;}
+.gal-tile.show{display:block;}
+
+
+.dev-list{display:flex; flex-direction:column; gap:1px; background:var(--line); border:1px solid var(--line);}
+.dev-row{background:var(--bg); padding:22px 24px; display:grid; grid-template-columns:110px 1fr; gap:20px;}
+.dev-row .date{font-family:'Poppins',sans-serif; font-size:12px; color:var(--accent-soft);}
+.dev-row h4{font-size:16px; margin-bottom:6px;}
+.dev-row p{font-size:13.5px; color:var(--muted); margin:0;}
+
+
+.guide-list{counter-reset:g;}
+.guide-item{display:grid; grid-template-columns:auto 1fr; gap:18px; padding:18px 0; border-bottom:1px solid var(--line);}
+.guide-item:last-child{border-bottom:none;}
+.guide-item .gn{font-family:'Poppins',sans-serif; font-size:20px; color:var(--accent); font-weight:700;}
+.guide-item h4{font-size:15.5px; margin-bottom:4px;}
+.guide-item p{font-size:13.5px; color:var(--muted); margin:0;}
+
+
+#page-feedback .form-label{font-size:13px; font-weight:600; color:var(--muted); margin-bottom:6px;}
+#page-feedback .form-control, #page-feedback .form-select{
+  background:var(--bg); border:1px solid var(--line-strong); color:var(--ink); border-radius:var(--radius);
+  padding:10px 12px; font-family:'Poppins',sans-serif; font-size:14px;
+}
+#page-feedback .form-control:focus, #page-feedback .form-select:focus{
+  background:var(--bg); color:var(--ink); border-color:var(--accent2); box-shadow:0 0 0 3px rgba(11,95,165,.18);
+}
+#page-feedback .form-control::placeholder{color:var(--muted-dim);}
+#page-feedback .invalid-feedback{font-size:12px; color:var(--accent-soft);}
+#page-feedback .was-validated .form-control:invalid, #page-feedback .form-control.is-invalid,
+#page-feedback .was-validated .form-select:invalid, #page-feedback .form-select.is-invalid{border-color:var(--accent);}
+#page-feedback .was-validated .form-control:valid, #page-feedback .form-control.is-valid{border-color:var(--accent2);}
+.fb-actions{display:flex; gap:12px; margin-top:22px; justify-content:flex-end;}
+.fb-status{margin-top:14px; font-size:13.5px; min-height:20px;}
+.fb-status.ok{color:var(--accent2);}
+.fb-status.err{color:var(--accent-soft);}
+.fb-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px;}
+.fb-list li{border:1px solid var(--line); border-radius:var(--radius); padding:10px 12px; font-size:13px; background:var(--bg);}
+.fb-list li b{display:block; font-size:13.5px; margin-bottom:2px;}
+.fb-list li span{color:var(--muted-dim); font-family:'Poppins',sans-serif; font-size:11px;}
+
+
+footer{border-top:1px solid var(--line); padding:48px 0 90px; background:var(--bg-alt);}
+.foot-grid{display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:32px;}
+.foot-grid h5{font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted-dim); margin-bottom:14px;}
+.foot-grid a{display:block; font-size:13.5px; color:var(--muted); text-decoration:none; margin-bottom:9px;}
+.foot-grid a:hover{color:var(--accent-soft);}
+.foot-bottom{margin-top:36px; padding-top:20px; border-top:1px solid var(--line); font-size:12px; color:var(--muted-dim); display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;}
+
+.ticker-bar{
+  position:fixed; left:0; right:0; bottom:0; z-index:200; height:38px; background:#08141F;
+  border-top:1px solid var(--line-strong); display:flex; align-items:center; overflow:hidden;
+}
+.ticker-track{display:flex; white-space:nowrap; animation:scrollTicker 32s linear infinite;}
+.ticker-track span{font-family:'Poppins',sans-serif; font-size:12px; color:var(--accent2); padding:0 34px; display:inline-flex; align-items:center; gap:8px;}
+.ticker-track span b{color:var(--ink); font-weight:700;}
+@keyframes scrollTicker{from{transform:translateX(0);} to{transform:translateX(-50%);}}
+body{padding-bottom:38px;}
+
+@media(max-width:920px){
+  .two-col, .two-col.rev{grid-template-columns:1fr;}
+  .grid3{grid-template-columns:repeat(2,1fr);}
+  .foot-grid{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:720px){
+  nav.menu{display:none; position:absolute; top:72px; left:0; right:0; background:var(--bg); flex-direction:column; padding:10px; border-bottom:1px solid var(--line);}
+  nav.menu.open{display:flex;}
+  .menu-toggle{display:block;}
+  .hero-stats{grid-template-columns:repeat(2,1fr);}
+  .grid3, .grid2{grid-template-columns:1fr;}
+  .foot-grid{grid-template-columns:1fr;}
+  .modal-stats{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+
+<header>
+  <div class="wrap nav-row">
+    <a href="#home" data-route="home" class="brand" title="Back to home">
+      <svg viewBox="0 0 48 48" fill="none"><path d="M4 36L15.5 15L21 25L26.5 13L44 36" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 15L21 25" stroke="#B5121B" stroke-width="2.6" stroke-linecap="round"/><circle cx="35.5" cy="10.5" r="2.4" fill="#0B5FA5"/></svg>
+      <span>Alpine Ascents<span class="sub">MOUNTAINEERING PORTAL</span></span>
+    </a>
+    <div class="nav-right">
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">☰</button>
+      <nav class="menu" id="mainMenu">
+        <a href="#home" data-route="home">Home</a>
+        <a href="#about" data-route="about">Mountaineering</a>
+        <a href="#records" data-route="records">Records</a>
+        <a href="#mountains" data-route="mountains">Peaks Database</a>
+        <a href="#clubs" data-route="clubs">Clubs &amp; Expeditions</a>
+        <a href="#gallery" data-route="gallery">Gallery</a>
+        <a href="#latest" data-route="latest">Latest Developments</a>
+        <a href="#guidelines" data-route="guidelines">Guidelines</a>
+        <a href="#feedback" data-route="feedback">Feedback</a>
+        <button class="nav-search-btn" id="searchToggle" type="button" aria-label="Search the portal" title="Search the portal (Ctrl+K)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Search<span class="kbd">Ctrl K</span>
+        </button>
+      </nav>
+      <div class="visitor-badge"><span class="dot-live"></span>Visitors: <b id="visitorCount">—</b></div>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch theme" title="Switch theme">
+        <span class="theme-icon" id="themeIcon"></span><span class="theme-label" id="themeLabel">Default</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+
+<div class="search-overlay" id="searchOverlay" role="dialog" aria-modal="true" aria-label="Search the portal">
+  <div class="search-panel">
+    <div class="search-field-row">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="siteSearchInput" placeholder="Search peaks, clubs, gallery, guidelines…" autocomplete="off" spellcheck="false">
+      <button class="search-close-btn" id="searchCloseBtn" type="button">Esc</button>
+    </div>
+    <div class="search-results" id="searchResults">
+      <div class="search-hint">Start typing to search the whole portal — peaks, ranges, countries, clubs, gallery, guidelines and more.</div>
+    </div>
+    <div class="search-panel-footer">
+      <span><span class="kbd">↑↓</span> navigate</span>
+      <span><span class="kbd">Enter</span> select</span>
+      <span><span class="kbd">Esc</span> close</span>
+    </div>
+  </div>
+</div>
+
+<main>
+
+
+<section class="page" id="page-home">
+  <div class="hero">
+    <div class="hero-video-wrap">
+      <video autoplay muted loop playsinline preload="auto" poster="https://images.pexels.com/videos/9972089/pexels-photo-9972089.jpeg?auto=compress&cs=tinysrgb&w=1600">
+        <source src="https://videos.pexels.com/video-files/9972089/9972089-uhd_2562_1440_30fps.mp4" type="video/mp4">
+      </video>
+    </div>
+    <div class="contours" id="contourSvg"></div>
+    <div class="wrap">
+      <div class="eyebrow">Est. tradition · Since the first rope was tied</div>
+      <h1>The mountain does not <em>negotiate.</em><br>You prepare, or you turn back.</h1>
+      <p class="lead">Alpine Ascents is a complete reference and community portal for mountaineering — history, technique, hazard awareness, world records, a database of 60+ peaks across the globe and Pakistan, and the clubs that guide climbers to the summit.</p>
+      <div class="hero-cta">
+        <a href="#mountains" class="btn btn-primary" data-route="mountains">Explore the Peaks Database →</a>
+        <a href="#about" class="btn btn-ghost" data-route="about">Learn Mountaineering</a>
+      </div>
+      <div class="hero-stats">
+        <div><div class="num">62+</div><div class="lbl">Peaks catalogued, world &amp; Pakistan</div></div>
+        <div><div class="num">14</div><div class="lbl">Eight-thousanders on record</div></div>
+        <div><div class="num">5</div><div class="lbl">Of the world's 14 giants sit in Pakistan</div></div>
+        <div><div class="num">8,611<span style="font-size:14px;">M</span></div><div class="lbl">K2 — Pakistan's crown, world's 2nd highest</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wordcloud" aria-hidden="true">
+    <span class="w-2">OUTDOOR</span><span class="w-1">ADVENTURE</span><span class="w-3">VALLEY</span>
+    <span class="w-hero">MOUNTAINEERING</span>
+    <span class="w-2">EXTREME</span><span class="w-1">CLIMBER</span><span class="w-3">SKY</span>
+    <span class="w-3">TREKKING</span><span class="w-2">ALTITUDE</span><span class="w-1">FREEDOM</span>
+    <span class="w-3">STRENGTH</span><span class="w-2">ROPE</span><span class="w-1">SUMMIT</span>
+    <span class="w-3">LANDSCAPE</span><span class="w-2">EXPEDITION</span><span class="w-1">ALPINE</span>
+    <span class="w-3">TOP</span><span class="w-2">GLACIER</span><span class="w-1">JOURNEY</span>
+    <span class="w-3">ACTIVE</span><span class="w-2">TOURISM</span><span class="w-1">CLIFF</span>
+  </div>
+
+  <div class="wrap" style="margin-top:80px;">
+    <div class="sec-head">
+      <span class="eyebrow">Why this portal exists</span>
+      <h2>Detailed, dependable information for every stage of the climb</h2>
+      <p>From a first read on what mountaineering actually is, to the geolocated clubs that can take you there — everything below is organised the way a climbing plan is: preparation, terrain, hazard, and record.</p>
+    </div>
+    <div class="grid3">
+      <div class="feat-card">
+        <div class="icon-tile"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 20L9 8l4 6 2-3 6 9H3Z"/></svg></div>
+        <h4>History, Styles &amp; Technique</h4>
+        <p>A full walkthrough of how the sport developed, the styles climbers choose between, and the roped, footwork, and rope-team techniques that keep an ascent safe.</p>
+      </div>
+      <div class="feat-card">
+        <div class="icon-tile"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 21V9l8-6 8 6v12H4Z"/><path d="M9 21v-6h6v6"/></svg></div>
+        <h4>Sheltering &amp; Hazard Awareness</h4>
+        <p>How expeditions camp above 6,000m, and the honest list of what actually threatens climbers — from crevasses to HACE — with how each is managed.</p>
+      </div>
+      <div class="feat-card">
+        <div class="icon-tile"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="9" r="3"/><path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12Z"/></svg></div>
+        <h4>Clubs, Records &amp; Live Locations</h4>
+        <p>A geolocated directory of mountaineering clubs and organisations worldwide, plotted on an interactive map, alongside the records this sport has set.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="page" id="page-about">
+  <div class="page-video-band" id="pvb-about">
+    <div class="pvb-embed"><video id="pvb-about-video" poster="https://images.pexels.com/videos/12202611/maountains-mountain-background-mountain-cliff-mountain-landscape-12202611.jpeg?auto=compress&cs=tinysrgb&w=1600" muted loop playsinline preload="none" title="A Climber's Ascent — Everest Summit Push"></video></div>
+    <span class="pvb-tag world">Worldwide</span>
+    <div class="pvb-caption">A Climber's Ascent — Everest Summit Push</div>
+  </div>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">01 · The Discipline</span>
+      <h2>What mountaineering is, and everything that goes into it</h2>
+      <p>Mountaineering — also called mountain climbing — is the sport of attaining, or attempting to attain, high points in mountainous terrain. Unlike most sports, it has no universal rulebook: climbers adopt a wide range of techniques and philosophies depending on the mountain, the season, and the style they choose. What follows are the five pillars every climber has to understand before roping up.</p>
+    </div>
+
+    <div class="pillbar" id="aboutPills">
+      <button class="active" data-pane="history">History</button>
+      <button data-pane="types">Types / Styles</button>
+      <button data-pane="techniques">Techniques</button>
+      <button data-pane="sheltering">Sheltering</button>
+      <button data-pane="hazards">Hazards</button>
+    </div>
+
+    
+    <div class="subpane visible" id="pane-history">
+      <div class="two-col">
+        <div>
+          <h3>A short history of mountaineering</h3>
+          <p style="color:var(--muted)">Mountaineering as an organised pursuit is younger than most people assume. For most of human history mountains were feared, avoided, or climbed only for religious and survival reasons. That changed in the late 18th century in the European Alps, and accelerated through two centuries of exploration, nationalism, and eventually pure sport.</p>
+        </div>
+        <div class="timeline">
+          <div class="tl-item"><span class="yr">1786</span><h4>Birth of modern mountaineering</h4><p>Jacques Balmat and Michel-Gabriel Paccard make the first recorded ascent of Mont Blanc, widely regarded as the founding moment of the sport.</p></div>
+          <div class="tl-item"><span class="yr">1857</span><h4>The Alpine Club founded</h4><p>The world's first mountaineering club is established in London, formalising climbing as an organised activity with shared ethics and record-keeping.</p></div>
+          <div class="tl-item"><span class="yr">1865</span><h4>The Matterhorn is climbed</h4><p>Edward Whymper's ascent — and the fatal descent that followed — closes what's called the "Golden Age of Alpinism" in the Alps.</p></div>
+          <div class="tl-item"><span class="yr">1953</span><h4>Everest's summit is reached</h4><p>Edmund Hillary and Tenzing Norgay become the first confirmed climbers to stand on the highest point on Earth.</p></div>
+          <div class="tl-item"><span class="yr">1954</span><h4>K2 falls to an Italian expedition</h4><p>Achille Compagnoni and Lino Lacedelli complete the first ascent of K2, the hardest of the eight-thousanders, from Pakistan's Karakoram range.</p></div>
+          <div class="tl-item"><span class="yr">1978</span><h4>Climbing without bottled oxygen</h4><p>Reinhold Messner and Peter Habeler prove Everest can be climbed without supplemental oxygen, reshaping what "fair means" climbing looks like.</p></div>
+          <div class="tl-item"><span class="yr">2021</span><h4>K2's first winter ascent</h4><p>A ten-member Nepali team completes the first winter summit of K2, closing the last of the eight-thousanders' winter-ascent list.</p></div>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="subpane" id="pane-types">
+      <h3>Types &amp; styles of mountaineering</h3>
+      <p style="color:var(--muted); max-width:640px;">Climbers don't just choose a mountain — they choose a style, and the style changes everything about the risk, the gear, and the timeline.</p>
+      <div class="grid3" style="margin-top:20px;">
+        <div class="feat-card"><span class="tag">Style</span><h4>Alpine Style</h4><p>Fast, lightweight, self-supported ascents with no fixed camps or porters — climb continuously, carry everything yourself.</p></div>
+        <div class="feat-card"><span class="tag">Style</span><h4>Expedition Style</h4><p>Slow and siege-based: fixed ropes, multiple stocked camps, and support teams ferrying supplies up the mountain over weeks.</p></div>
+        <div class="feat-card"><span class="tag">Style</span><h4>High-Altitude Mountaineering</h4><p>Climbing above roughly 5,500m, where the body cannot fully acclimatise and supplemental oxygen is often used above 8,000m.</p></div>
+        <div class="feat-card"><span class="tag">Style</span><h4>Ice &amp; Mixed Climbing</h4><p>Ascending frozen waterfalls, glaciers, and rock-ice combinations using ice tools and crampons on steep terrain.</p></div>
+        <div class="feat-card"><span class="tag">Style</span><h4>Ski Mountaineering</h4><p>Climbing with skis attached, or carried, to descend technical alpine terrain rather than walking down.</p></div>
+        <div class="feat-card"><span class="tag">Style</span><h4>Big Wall &amp; Free Solo</h4><p>Multi-day vertical rock ascents using aid or free climbing, at the far end without a rope at all — the highest-risk style in the sport.</p></div>
+      </div>
+    </div>
+
+    
+    <div class="subpane" id="pane-techniques">
+      <h3>Core techniques</h3>
+      <p style="color:var(--muted); max-width:640px;">Technique is what turns a mountain from a hazard into a route. These are the fundamentals taught before anyone touches an 8,000m peak.</p>
+      <div class="grid3" style="margin-top:20px;">
+        <div class="feat-card"><h4>Roped Travel</h4><p>Climbers tie into a shared rope on glaciers so a fall into a crevasse can be arrested by the rest of the team.</p></div>
+        <div class="feat-card"><h4>Self-Arrest</h4><p>Using an ice axe to stop a slide on snow or ice before it becomes a fall — the first skill taught on any snow course.</p></div>
+        <div class="feat-card"><h4>Cramponing</h4><p>Footwork on steel spikes for ice and hard snow, from flat-footed "French technique" to front-pointing on steep faces.</p></div>
+        <div class="feat-card"><h4>Belaying &amp; Rappelling</h4><p>Managing rope tension to protect a climbing partner, and controlled rope descents to retreat from terrain that can't be down-climbed.</p></div>
+        <div class="feat-card"><h4>Acclimatisation</h4><p>Climbing high, sleeping low — a staged ascent pattern that lets the body adapt to thinning oxygen before pushing for the summit.</p></div>
+        <div class="feat-card"><h4>Fixed Rope &amp; Jumaring</h4><p>Ropes anchored to the mountain that climbers ascend using a mechanical clamp, standard on expedition-style 8,000m routes.</p></div>
+      </div>
+    </div>
+
+    
+    <div class="subpane" id="pane-sheltering">
+      <h3>Sheltering on the mountain</h3>
+      <div class="two-col rev">
+        <div class="card">
+          <p style="color:var(--muted); margin:0;">Above base camp, shelter is a survival system, not a comfort. Expeditions build a ladder of camps up the mountain, each one stocked and used only as long as needed before the summit push.</p>
+          <ul style="color:var(--muted); font-size:14px; padding-left:20px; margin-top:14px;">
+            <li>Base Camp — the expedition's operating hub, often reachable by trek</li>
+            <li>Advanced Base Camp (ABC) — the first high-altitude staging point</li>
+            <li>Camps I–IV — progressively higher, smaller, more exposed tent sites</li>
+            <li>Summit push — often launched from the highest camp at night</li>
+          </ul>
+        </div>
+        <div class="grid2" style="align-content:start;">
+          <div class="feat-card"><h4>Four-Season Tents</h4><p>Reinforced dome tents built to hold shape in high wind and heavy snow load.</p></div>
+          <div class="feat-card"><h4>Snow Caves</h4><p>Dug into a snowbank for insulation and wind protection when no tent is available.</p></div>
+          <div class="feat-card"><h4>Igloos</h4><p>Blocks of compacted snow built into a dome — slower to build, but excellent insulation.</p></div>
+          <div class="feat-card"><h4>Bivouac (Bivy)</h4><p>A minimal sleeping-bag-and-shell setup used for emergency or fast-and-light overnight stops.</p></div>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="subpane" id="pane-hazards">
+      <h3>Hazards — the honest list</h3>
+      <p style="color:var(--muted); max-width:640px;">Mountaineering is, for the untrained, genuinely dangerous. These are the hazards that account for most serious incidents.</p>
+      <div class="grid3" style="margin-top:20px;">
+        <div class="feat-card"><span class="tag danger">Terrain</span><h4>Avalanches</h4><p>Sudden snow-slope failure — the leading cause of mountaineering deaths on snow-covered peaks.</p></div>
+        <div class="feat-card"><span class="tag danger">Terrain</span><h4>Crevasses</h4><p>Hidden glacier cracks, often snow-bridged and invisible, crossed only with roped travel.</p></div>
+        <div class="feat-card"><span class="tag danger">Physiology</span><h4>Altitude Sickness (AMS / HACE / HAPE)</h4><p>Reduced oxygen at altitude causing anything from headaches to fatal fluid build-up in the brain or lungs.</p></div>
+        <div class="feat-card"><span class="tag danger">Terrain</span><h4>Rockfall &amp; Icefall</h4><p>Loose rock or collapsing seracs above the route — largely time-of-day and route-choice dependent.</p></div>
+        <div class="feat-card"><span class="tag danger">Physiology</span><h4>Frostbite &amp; Hypothermia</h4><p>Cold injury to extremities and dropping core temperature, both accelerated by wind and wet clothing.</p></div>
+        <div class="feat-card"><span class="tag danger">Weather</span><h4>Whiteouts &amp; Storms</h4><p>Sudden loss of visibility and violent weather windows that can strand climbers above their last safe camp.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="page" id="page-records">
+  <div class="page-video-band" id="pvb-records">
+    <div class="pvb-embed"><video id="pvb-records-video" poster="https://images.pexels.com/videos/5895501/pexels-photo-5895501.jpeg?auto=compress&cs=tinysrgb&w=1600" muted loop playsinline preload="none" title="K2 — The King of Mountains (Karakoram, Pakistan)"></video></div>
+    <span class="pvb-tag pk">Pakistan · Nationwide</span>
+    <div class="pvb-caption">K2 — The King of Mountains (Karakoram, Pakistan)</div>
+  </div>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">02 · Record Book</span>
+      <h2>Records this sport has set</h2>
+      <p>A running list of the marks — human and geographic — that define mountaineering history.</p>
+    </div>
+    <div class="records-grid">
+      <div class="record-card"><div class="big">8,849 M</div><div class="lbl">Highest point on Earth</div><p>Mount Everest, Nepal / Tibet — the benchmark every high-altitude climber is measured against.</p></div>
+      <div class="record-card"><div class="big">1978</div><div class="lbl">First Everest summit without oxygen</div><p>Reinhold Messner &amp; Peter Habeler proved the mountain could be climbed on the body's own capacity.</p></div>
+      <div class="record-card"><div class="big">14</div><div class="lbl">First to climb all 14 eight-thousanders</div><p>Reinhold Messner completed the full set in 1986, a benchmark for a generation of climbers after him.</p></div>
+      <div class="record-card"><div class="big">1975</div><div class="lbl">First woman to summit Everest</div><p>Junko Tabei of Japan reached the summit, opening high-altitude mountaineering to a new generation of women.</p></div>
+      <div class="record-card"><div class="big">2019</div><div class="lbl">Fastest all-14 eight-thousanders</div><p>Nirmal "Nims" Purja completed all fourteen peaks in 6 months 6 days — a record once thought decades away.</p></div>
+      <div class="record-card"><div class="big">2021</div><div class="lbl">K2's first winter ascent</div><p>A ten-member Nepali team stood on K2's summit in January — the last great winter-climbing milestone.</p></div>
+      <div class="record-card"><div class="big">80</div><div class="lbl">Oldest Everest summiteer (age)</div><p>Set by Japanese climber Yuichiro Miura in 2013, proving age is a variable, not a wall.</p></div>
+      <div class="record-card"><div class="big">13</div><div class="lbl">Youngest to climb Everest (age)</div><p>Jordan Romero reached the summit in 2010 via the north side route from Tibet.</p></div>
+      <div class="record-card"><div class="big">2021</div><div class="lbl">First Pakistani woman on K2</div><p>Naila Kiani has since gone on to summit multiple eight-thousanders, becoming a national mountaineering figure.</p></div>
+    </div>
+  </div>
+</section>
+
+
+<section class="page" id="page-mountains">
+  <div class="page-video-band" id="pvb-mountains">
+    <div class="pvb-embed"><video id="pvb-mountains-video" poster="https://images.pexels.com/videos/5895501/pexels-photo-5895501.jpeg?auto=compress&cs=tinysrgb&w=1600" muted loop playsinline preload="none" title="Peaks Database footage"></video></div>
+    <span class="pvb-tag world" id="pvb-mountains-tag">Worldwide</span>
+    <div class="pvb-caption" id="pvb-mountains-caption">Lost on Everest — Mallory &amp; Irvine's First Summit Attempt</div>
+  </div>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">03 · Peaks Database</span>
+      <h2>62 peaks, ranked by elevation — world &amp; Pakistan</h2>
+      <p>Numbered by height within its list, since that ranking is the one fact about a mountain that never changes. Tap any card to explore more.</p>
+    </div>
+    <div class="mtn-controls">
+      <div class="region-toggle" id="regionToggle">
+        <button class="active" data-region="world">Worldwide</button>
+        <button data-region="pakistan">Pakistan</button>
+      </div>
+      <input type="text" id="mtnSearch" placeholder="Search a peak, range, or country…">
+      <select id="mtnSort">
+        <option value="height">Sort: Height (desc)</option>
+        <option value="name">Sort: Name (A–Z)</option>
+      </select>
+    </div>
+    <div class="vr-viewer" id="vr-mountains"></div>
+    <div class="mtn-grid" id="mtnGrid"></div>
+  </div>
+</section>
+
+
+<section class="page" id="page-clubs">
+  <div class="page-video-band" id="pvb-clubs">
+    <div class="pvb-embed"><video id="pvb-clubs-video" poster="https://images.pexels.com/videos/5895504/pexels-photo-5895504.jpeg?auto=compress&cs=tinysrgb&w=1600" muted loop playsinline preload="none" title="Mission Broad Peak — Karakoram, Pakistan"></video></div>
+    <span class="pvb-tag pk">Pakistan · Nationwide</span>
+    <div class="pvb-caption">Mission Broad Peak — Karakoram, Pakistan</div>
+  </div>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">04 · Clubs, Organisations &amp; Expeditions</span>
+      <h2>Where the climbing community lives — geolocated</h2>
+      <p>Mountaineering clubs and organisations that run expeditions worldwide, plotted using an interactive map (OpenStreetMap / Leaflet — swap in the Google Maps JS API with your own key if preferred).</p>
+    </div>
+    <div class="vr-viewer" id="vr-clubs"></div>
+    <div class="two-col">
+      <div id="map"></div>
+      <div class="club-list" id="clubList"></div>
+    </div>
+    <div class="story-box">
+      <span class="eyebrow">Success Story</span>
+      <h3 style="margin-top:8px;">Alpine Club of Pakistan — Broad Peak Youth Expedition, 2023</h3>
+      <p style="color:var(--muted); max-width:760px;">A twelve-member team, six of them first-time 7,000m+ climbers, summited Broad Peak's Rocky Summit under Alpine Club of Pakistan guidance after a five-week acclimatisation rotation through Concordia. It remains one of the largest domestically-organised Karakoram youth ascents on record.</p>
+    </div>
+  </div>
+</section>
+
+
+<section class="page" id="page-gallery">
+  <div class="page-video-band" id="pvb-gallery">
+    <div class="pvb-embed"><video id="pvb-gallery-video" poster="https://images.pexels.com/videos/2040076/free-video-2040076.jpg?auto=compress&cs=tinysrgb&w=1600" muted loop playsinline preload="none" title="Mountain Climbers on a Summit"></video></div>
+    <span class="pvb-tag world">Worldwide</span>
+    <div class="pvb-caption">Mountain Climbers on a Summit</div>
+  </div>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">05 · Gallery</span>
+      <h2>Expeditions, technique, and basecamp life</h2>
+      <p>Illustrative visuals — replace with your own expedition photography and video embeds when deploying this portal.</p>
+    </div>
+    <div class="vr-viewer" id="vr-gallery"></div>
+    <div class="gal-tabs" id="galTabs">
+      <button class="active" data-cat="all">All</button>
+      <button data-cat="expedition">Expeditions</button>
+      <button data-cat="technique">Technique</button>
+      <button data-cat="basecamp">Basecamp</button>
+      <button data-cat="summit">Summit</button>
+    </div>
+    <div class="gal-grid" id="galGrid"></div>
+  </div>
+</section>
+
+
+<section class="page" id="page-latest">
+  <div class="page-video-band" id="pvb-latest">
+    <div class="pvb-embed"><video id="pvb-latest-video" poster="https://images.pexels.com/videos/32200823/pexels-photo-32200823.jpeg?auto=compress&cs=tinysrgb&w=1600" muted loop playsinline preload="none" title="The Three-Year Winter Ascent of Nanga Parbat, Pakistan"></video></div>
+    <span class="pvb-tag pk">Pakistan · Nationwide</span>
+    <div class="pvb-caption">The Three-Year Winter Ascent of Nanga Parbat, Pakistan</div>
+  </div>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">06 · Latest Developments</span>
+      <h2>What's changing in the sport right now</h2>
+    </div>
+    <div class="vr-viewer" id="vr-latest"></div>
+    <div class="dev-list">
+      <div class="dev-row"><div class="date">2025</div><div><h4>Nanga Parbat's first winter ascent finally falls — after three winters of trying</h4><p>Nanga Parbat, the "Killer Mountain," resisted winter ascent longer than any other Pakistani 8,000er. A team's three-year push through repeated storm cycles and turnarounds finally put climbers on the summit in winter conditions, closing out one of the Karakoram's last great winter-climbing objectives.</p></div></div>
+      <div class="dev-row"><div class="date">2024</div><div><h4>Satellite communicators become standard kit</h4><p>Two-way satellite messengers (Garmin inReach, Zoleo) are now standard expedition gear, letting climbers send SOS signals and weather updates from anywhere on the mountain, independent of cell coverage.</p></div></div>
+      <div class="dev-row"><div class="date">2024</div><div><h4>Glacial retreat is reshaping classic routes</h4><p>Warming is exposing bare ice and rockfall on routes once covered in stable snow, pushing guiding services to re-survey approach routes on peaks like the Matterhorn and Mont Blanc almost every season.</p></div></div>
+      <div class="dev-row"><div class="date">2023–24</div><div><h4>Karakoram permit reform</h4><p>Pakistan's tourism authorities have streamlined expedition permit processing for K2 and neighbouring Gasherbrum peaks, cutting paperwork time and expanding porter-employment programs around Skardu.</p></div></div>
+      <div class="dev-row"><div class="date">Ongoing</div><div><h4>Lighter, smarter gear</h4><p>Advances in insulation fabrics and battery-heated boot liners are cutting summit-day pack weight, extending the safe window climbers have at extreme altitude.</p></div></div>
+      <div class="dev-row"><div class="date">Ongoing</div><div><h4>Sustainable expedition practice</h4><p>"Leave No Trace" waste-carry-down policies are now enforced by permit on most 8,000m peaks, with fixed penalties for abandoned oxygen bottles and tents.</p></div></div>
+    </div>
+  </div>
+</section>
+
+
+<section class="page" id="page-guidelines">
+  <div class="page-video-band" id="pvb-guidelines">
+    <div class="pvb-embed"><video id="pvb-guidelines-video" poster="https://images.pexels.com/videos/2021532/free-video-2021532.jpg?auto=compress&cs=tinysrgb&w=1600" muted loop playsinline preload="none" title="Alpine Ridgeline — Before You Rope Up"></video></div>
+    <span class="pvb-tag world">Worldwide</span>
+    <div class="pvb-caption">Alpine Ridgeline — Before You Rope Up</div>
+  </div>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">07 · General Guidelines</span>
+      <h2>Before you rope up</h2>
+      <p>General, non-technical guidance for anyone considering mountaineering. This is not a substitute for certified training or a guided course.</p>
+    </div>
+    <div class="guide-list">
+      <div class="guide-item"><div class="gn">01</div><div><h4>Build a base before you go high</h4><p>Learn roped travel, self-arrest, and navigation on low-risk terrain before attempting any glaciated or high-altitude peak.</p></div></div>
+      <div class="guide-item"><div class="gn">02</div><div><h4>Climb with a certified guide or club</h4><p>Especially for a first expedition — local knowledge of route conditions and weather patterns is not optional.</p></div></div>
+      <div class="guide-item"><div class="gn">03</div><div><h4>Acclimatise, don't rush</h4><p>Follow a staged ascent profile; altitude illness is unpredictable and unrelated to fitness level.</p></div></div>
+      <div class="guide-item"><div class="gn">04</div><div><h4>Check weather and objective hazards daily</h4><p>Avalanche and rockfall risk change hour to hour — a route safe at dawn may not be safe by noon.</p></div></div>
+      <div class="guide-item"><div class="gn">05</div><div><h4>Always have a turnaround time</h4><p>Set it before you leave camp, and respect it regardless of how close the summit looks.</p></div></div>
+      <div class="guide-item"><div class="gn">06</div><div><h4>Carry redundant communication &amp; navigation</h4><p>A satellite communicator, map, compass/GPS, and a known emergency contact plan, every time.</p></div></div>
+      <div class="guide-item"><div class="gn">07</div><div><h4>Respect permits, porters, and local communities</h4><p>Follow the host country's climbing regulations and pay porters and guides fairly — the mountain community sustains the sport.</p></div></div>
+    </div>
+
+    <div class="sec-head" style="margin-top:64px;">
+      <span class="eyebrow">World Record Holders</span>
+      <h2 style="font-size:26px;">The climbers who set the bar</h2>
+      <p>The people whose ascents redefined what's possible at altitude — worth studying before you set any goal of your own.</p>
+    </div>
+    <div class="grid3">
+      <div class="feat-card"><span class="tag">Italy</span><h4>Reinhold Messner</h4><p>First to summit Everest without supplemental oxygen (1978, with Peter Habeler), and first to climb all 14 eight-thousanders (1986).</p></div>
+      <div class="feat-card"><span class="tag">Nepal</span><h4>Nirmal "Nims" Purja</h4><p>Climbed all 14 eight-thousanders in 6 months 6 days in 2019 — "Project Possible" — a feat once assumed to be decades away.</p></div>
+      <div class="feat-card"><span class="tag">Japan</span><h4>Junko Tabei</h4><p>First woman to summit Everest (1975), and later the first woman to complete the Seven Summits.</p></div>
+      <div class="feat-card"><span class="tag danger">Pakistan</span><h4>Sirbaz Khan</h4><p>First Pakistani to climb all 14 eight-thousanders (2023), then the first Pakistani to complete all 14 without supplemental oxygen (2025).</p></div>
+      <div class="feat-card"><span class="tag danger">Pakistan</span><h4>Naila Kiani</h4><p>First Pakistani woman to summit all five of Pakistan's 8,000m peaks, building one of the country's fastest-growing mountaineering records.</p></div>
+      <div class="feat-card"><span class="tag">Nepal</span><h4>Kami Rita Sherpa</h4><p>Holds the record for the most Everest summits by any climber — a career built on decades of guiding on the mountain.</p></div>
+    </div>
+  </div>
+</section>
+
+
+<section class="page" id="page-feedback">
+  <div class="page-video-band" id="pvb-feedback">
+    <div class="pvb-embed"><video id="pvb-feedback-video" poster="https://images.pexels.com/videos/8415207/pexels-photo-8415207.jpeg?auto=compress&cs=tinysrgb&w=1600" muted loop playsinline preload="none" title="Sunrise Over the Mountain Top"></video></div>
+    <span class="pvb-tag world">Worldwide</span>
+    <div class="pvb-caption">Sunrise Over the Mountain Top</div>
+  </div>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">08 · Feedback</span>
+      <h2>Tell us how the climb went</h2>
+      <p>Trip reports, corrections, or a club we've missed — this form is validated client-side and kept for your current browser session.</p>
+    </div>
+    <div class="row">
+      <div class="col-lg-7">
+        <form id="feedbackForm" class="card needs-validation" novalidate>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="fbName" class="form-label">Full name</label>
+              <input type="text" class="form-control" id="fbName" required minlength="2" pattern="(?=.*[A-Za-z\u00C0-\u017F]).+" title="Name must include at least one letter — numbers are allowed alongside letters." placeholder="Your name">
+              <div class="invalid-feedback">Name must be at least 2 characters and include at least one letter (numbers alone aren't allowed).</div>
+            </div>
+            <div class="col-md-6">
+              <label for="fbEmail" class="form-label">Email address</label>
+              <input type="email" class="form-control" id="fbEmail" required placeholder="you@example.com">
+              <div class="invalid-feedback">Enter a valid email address.</div>
+            </div>
+            <div class="col-12">
+              <label for="fbSubject" class="form-label">Subject</label>
+              <select class="form-select" id="fbSubject" required>
+                <option value="" selected disabled>Choose a topic…</option>
+                <option>Trip report / success story</option>
+                <option>Correction on a peak or record</option>
+                <option>Suggest a club or organisation</option>
+                <option>General feedback</option>
+              </select>
+              <div class="invalid-feedback">Please choose a topic.</div>
+            </div>
+            <div class="col-12">
+              <label for="fbMessage" class="form-label">Message</label>
+              <textarea class="form-control" id="fbMessage" rows="5" required minlength="10" placeholder="Write your feedback here…"></textarea>
+              <div class="invalid-feedback">Message should be at least 10 characters.</div>
+            </div>
+          </div>
+          <div id="fbStatus" class="fb-status" role="status" aria-live="polite"></div>
+          <div class="fb-actions">
+            <button type="button" class="btn btn-ghost" id="fbClose">Close</button>
+            <button type="submit" class="btn btn-primary" id="fbSave">Save changes</button>
+          </div>
+        </form>
+      </div>
+      <div class="col-lg-5">
+        <div class="card" style="height:100%;">
+          <h4 style="margin-bottom:10px;">This session's feedback</h4>
+          <p style="color:var(--muted); font-size:13.5px;">Stored in <code>sessionStorage</code> — cleared when you close this tab, never sent anywhere.</p>
+          <ul id="fbList" class="fb-list"></ul>
+          <p id="fbEmpty" style="color:var(--muted-dim); font-size:13px;">Nothing submitted yet this session.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+
+<section class="page" id="page-detail"></section>
+
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="brand" style="margin-bottom:12px;">
+          <svg viewBox="0 0 48 48" fill="none" width="26" height="26"><path d="M4 36L15.5 15L21 25L26.5 13L44 36" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 15L21 25" stroke="#B5121B" stroke-width="2.6" stroke-linecap="round"/><circle cx="35.5" cy="10.5" r="2.4" fill="#0B5FA5"/></svg>
+          Alpine Ascents
+        </div>
+        <p style="color:var(--muted); font-size:13.5px; max-width:280px;">A reference and community portal for mountaineering: history, technique, hazard awareness, records, and geolocated clubs across the world and Pakistan.</p>
+        <button type="button" class="btn btn-ghost" style="padding:9px 16px; font-size:12.5px;" onclick="subscribeToAlerts()">Get expedition alerts</button>
+      </div>
+      <div><h5>Portal</h5>
+        <a href="#about" data-route="about">Mountaineering</a>
+        <a href="#records" data-route="records">Records</a>
+        <a href="#mountains" data-route="mountains">Peaks Database</a>
+        <a href="#guidelines" data-route="guidelines">Guidelines</a>
+      </div>
+      <div><h5>Community</h5>
+        <a href="#clubs" data-route="clubs">Clubs &amp; Expeditions</a>
+        <a href="#gallery" data-route="gallery">Gallery</a>
+        <a href="#latest" data-route="latest">Latest Developments</a>
+      </div>
+      <div><h5>Reference</h5>
+        <a href="https://www.uiaa.org" target="_blank" rel="noopener">UIAA — International Climbing Federation</a>
+        <a href="https://www.alpineclub.org.uk" target="_blank" rel="noopener">The Alpine Club, UK</a>
+        <a href="https://www.himalayandatabase.com" target="_blank" rel="noopener">The Himalayan Database</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Alpine Ascents Portal — built for the mountaineering community.</span>
+      <span class="mono" id="footClock"></span>
+    </div>
+  </div>
+</footer>
+
+
+<div class="ticker-bar">
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+
+const THEME_KEY = 'alpine-ascents-theme';
+const THEME_ORDER = ['auto','light','dark'];
+const THEME_META = {
+  auto:  {label:'Default', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.03-.92-.08-1.36A5.4 5.4 0 0 1 12 3Z"/></svg>'},
+  light: {label:'Light',   icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4.6"/><path d="M12 2v2.4M12 19.6V22M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2 12h2.4M19.6 12H22M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg>'},
+  dark:  {label:'Dark',    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11Z"/></svg>'}
+};
+const osDarkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+const osLightQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+
+// Night is treated as 7pm–6am local time. Used only as a fallback for "Default"
+// mode when the device/OS itself doesn't report a light/dark preference.
+function isNightTime(){
+  const h = new Date().getHours();
+  return h >= 19 || h < 6;
+}
+
+// Resolves what "Default" should actually render as right now:
+// 1) Respect the device/OS theme setting if the browser exposes one.
+// 2) Otherwise fall back to local time of day (dark at night, light by day).
+function resolveAutoTheme(){
+  if(osDarkQuery && osDarkQuery.matches) return 'dark';
+  if(osLightQuery && osLightQuery.matches) return 'light';
+  return isNightTime() ? 'dark' : 'light';
+}
+
+function applyTheme(mode){
+  document.documentElement.setAttribute('data-theme', mode);
+  const resolved = mode === 'auto' ? resolveAutoTheme() : mode;
+  document.documentElement.setAttribute('data-theme-resolved', resolved);
+  const iconEl = document.getElementById('themeIcon');
+  const labelEl = document.getElementById('themeLabel');
+  if(iconEl) iconEl.innerHTML = THEME_META[mode].icon;
+  if(labelEl) labelEl.textContent = THEME_META[mode].label;
+  try{ localStorage.setItem(THEME_KEY, mode); }catch(e){}
+}
+function refreshIfAuto(){
+  if(document.documentElement.getAttribute('data-theme') === 'auto'){
+    document.documentElement.setAttribute('data-theme-resolved', resolveAutoTheme());
+  }
+}
+(function initTheme(){
+  let saved = 'auto';
+  try{ saved = localStorage.getItem(THEME_KEY) || 'auto'; }catch(e){}
+  applyTheme(THEME_ORDER.includes(saved) ? saved : 'auto');
+})();
+document.addEventListener('DOMContentLoaded', function(){
+  const btn = document.getElementById('themeToggle');
+  if(!btn) return;
+  btn.addEventListener('click', function(){
+    const current = document.documentElement.getAttribute('data-theme') || 'auto';
+    const next = THEME_ORDER[(THEME_ORDER.indexOf(current) + 1) % THEME_ORDER.length];
+    applyTheme(next);
+  });
+});
+// Live-follow the OS theme switch (e.g. macOS/Windows night mode kicking in) while on Default.
+if(osDarkQuery && osDarkQuery.addEventListener){
+  osDarkQuery.addEventListener('change', refreshIfAuto);
+  osLightQuery.addEventListener('change', refreshIfAuto);
+} else if(osDarkQuery && osDarkQuery.addListener){
+  osDarkQuery.addListener(refreshIfAuto);
+}
+// Also re-check every few minutes so the time-of-day fallback rolls over on a long-open tab.
+setInterval(refreshIfAuto, 5 * 60 * 1000);
+
+
+const worldMountains = [
+{n:"Mount Everest",h:8849,range:"Mahalangur Himalaya",loc:"Nepal / China",fa:"1953",blurb:"The highest point on Earth, and the benchmark every high-altitude climber is measured against.",extra:"First climbed by Edmund Hillary and Tenzing Norgay via the South Col route; today it sees both classic-style and heavily commercial expeditions each spring.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/yhc5BySgB9ZMjtm0S4Qp/image.jpg"},
+{n:"K2",h:8611,range:"Karakoram",loc:"Pakistan / China",fa:"1954",blurb:"The world's second-highest peak, and widely regarded as the hardest of the eight-thousanders to climb.",extra:"Known as the 'Savage Mountain' for its fatality rate; its first winter ascent didn't come until 2021, decades after Everest's.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/ZAmHjRB22vMFHFFw864o/image.jpg"},
+{n:"Kangchenjunga",h:8586,range:"Himalaya",loc:"Nepal / India",fa:"1955",blurb:"The third-highest mountain on Earth, held sacred by local communities who traditionally stop short of the true summit.",extra:"British climbers Joe Brown and George Band made the first ascent, honouring local custom by not stepping on the exact summit point.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/IIeUSNnkYO0Rf7acZRcX/image.jpg"},
+{n:"Lhotse",h:8516,range:"Mahalangur Himalaya",loc:"Nepal / China",fa:"1956",blurb:"The fourth-highest peak, connected to Everest by the South Col and often climbed on the same route.",extra:"Its steep, narrow Lhotse Couloir summit approach is one of the more technical finishes among the eight-thousanders.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/pJlCpyeCkf6J15mEjMJL/image.jpg"},
+{n:"Makalu",h:8485,range:"Mahalangur Himalaya",loc:"Nepal / China",fa:"1955",blurb:"A distinctive four-sided pyramid peak considered one of the more technically demanding 8,000m climbs.",extra:"A French expedition made the first ascent; its isolated ridgelines require sustained technical climbing near the summit.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/B8bEPu0EsG1nvATqYAaX/image.jpg"},
+{n:"Cho Oyu",h:8188,range:"Mahalangur Himalaya",loc:"Nepal / China",fa:"1954",blurb:"Regarded as the most approachable eight-thousander, often recommended as a first 8,000m objective.",extra:"Its relatively moderate slopes make it a popular acclimatisation and training peak for climbers aiming at Everest.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/OVJP9OzQtEdDUAA7jLfl/image.jpg"},
+{n:"Dhaulagiri I",h:8167,range:"Himalaya",loc:"Nepal",fa:"1960",blurb:"Once believed to be the world's highest mountain before modern surveying, with dramatic vertical relief from its base.",extra:"A Swiss-Austrian expedition completed the first ascent using an aircraft to help establish a high camp.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/8bcKMiPhptO4JsAhPNo3/image.jpg"},
+{n:"Manaslu",h:8163,range:"Mansiri Himal",loc:"Nepal",fa:"1956",blurb:"Nicknamed the 'Mountain of the Spirit', it's become one of the more frequently climbed eight-thousanders.",extra:"A Japanese team made the first ascent; the peak has seen a sharp rise in commercial expeditions in the last decade.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/6KVyeEWz3atGp5L59chq/image.jpg"},
+{n:"Nanga Parbat",h:8126,range:"Himalaya",loc:"Pakistan",fa:"1953",blurb:"Known as 'Killer Mountain' for its brutal early climbing history, with the largest single rock-and-ice face on Earth.",extra:"Hermann Buhl completed a legendary solo push to its summit, arriving after his climbing partners turned back.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/saQC3YS8v0PIkDSjE5xe/image.jpg"},
+{n:"Annapurna I",h:8091,range:"Himalaya",loc:"Nepal",fa:"1950",blurb:"The first eight-thousander ever climbed, and statistically the most dangerous relative to its number of ascents.",extra:"Maurice Herzog's French team summited it years before Everest fell, at severe cost in frostbite injuries.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/fN909PIhy3mkALATKWyx/image.jpg"},
+{n:"Gasherbrum I",h:8080,range:"Karakoram",loc:"Pakistan / China",fa:"1958",blurb:"Also called Hidden Peak for how deeply it sits within the Karakoram's Baltoro glacier system.",extra:"An American expedition made the first ascent; it's frequently climbed alongside its neighbour, Gasherbrum II.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/moAebL5uHKYUKYp8w8EH/image.jpg"},
+{n:"Broad Peak",h:8051,range:"Karakoram",loc:"Pakistan / China",fa:"1957",blurb:"Named for its wide, 1.5km-long summit ridge, sitting close to K2 in the Karakoram's Concordia amphitheatre.",extra:"First climbed by an Austrian team including Hermann Buhl, on his second eight-thousander summit.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/BYcXPry7gi6i2vY8pckn/image.jpg"},
+{n:"Gasherbrum II",h:8035,range:"Karakoram",loc:"Pakistan / China",fa:"1956",blurb:"Considered one of the more moderate eight-thousanders technically, often used as a training peak for the range.",extra:"An Austrian expedition made the first ascent; its relatively gentle upper slopes make it a common Karakoram objective.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/KbtuDLTXCtN3GSJrwzyH/image.jpg"},
+{n:"Shishapangma",h:8027,range:"Himalaya",loc:"China",fa:"1964",blurb:"The lowest of the eight-thousanders, and the only one located entirely within a single country.",extra:"A Chinese expedition completed the first ascent, notably later than most other 8,000m peaks due to access restrictions.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/oIIj8bOns9elSX8cgFDE/image.jpg"},
+{n:"Denali",h:6190,range:"Alaska Range",loc:"United States",fa:"1913",blurb:"North America's highest peak, with one of the greatest base-to-summit vertical rises of any mountain on Earth.",extra:"Its extreme cold and long approach make it a serious high-latitude test even at moderate technical difficulty.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/P83uJubqGlZm6A826mle/image.jpg"},
+{n:"Aconcagua",h:6961,range:"Andes",loc:"Argentina",fa:"1897",blurb:"The highest peak outside Asia, and one of the celebrated Seven Summits.",extra:"Its normal route is non-technical, but altitude and severe wind make it a genuine high-altitude test.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/ah4D7WMUZBpItW8pb7Dj/image.jpg"},
+{n:"Mount Kilimanjaro",h:5895,range:"Eastern Rift",loc:"Tanzania",fa:"1889",blurb:"Africa's highest peak and the world's tallest free-standing mountain, climbable without technical gear.",extra:"Hans Meyer and Ludwig Purtscheller made the first recorded ascent of Kibo, its highest summit point.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/W2VYTeBSOSAZgo9HgyPA/image.jpg"},
+{n:"Mount Elbrus",h:5642,range:"Caucasus",loc:"Russia",fa:"1874",blurb:"Europe's highest peak, a dormant volcano popular with Seven Summits climbers.",extra:"An English-led expedition made the first ascent of its higher west summit in 1874.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/h1RhlBMYTGRyLmVVRDoA/image.jpg"},
+{n:"Vinson Massif",h:4892,range:"Sentinel Range",loc:"Antarctica",fa:"1966",blurb:"Antarctica's highest peak, reachable only via costly, logistically complex polar expeditions.",extra:"First climbed by an American Alpine Club expedition, decades after most other continental high points.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/oVIj5g9NHnOHmXN5tz66/image.jpg"},
+{n:"Puncak Jaya",h:4884,range:"Sudirman Range",loc:"Indonesia",fa:"1962",blurb:"Also called Carstensz Pyramid, the highest peak in Oceania and the most technical of the Seven Summits.",extra:"Heinrich Harrer led its first ascent; unlike the other Seven Summits, it demands genuine rock-climbing skill.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/cajYIC6j1JBv1hkXHS1u/image.jpg"},
+{n:"Mont Blanc",h:4808,range:"Alps",loc:"France / Italy",fa:"1786",blurb:"Western Europe's highest peak, and the mountain whose first ascent is credited with founding modern mountaineering.",extra:"Climbed by Jacques Balmat and Michel-Gabriel Paccard, launching the sport as an organised pursuit.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/GMXq9YLKpUvUiEzimb2U/image.jpg"},
+{n:"Matterhorn",h:4478,range:"Alps",loc:"Switzerland / Italy",fa:"1865",blurb:"One of the most recognisable mountain silhouettes on Earth, and a symbol of the Alps' Golden Age of climbing.",extra:"Edward Whymper's ascent ended the Golden Age; four of his party died on the descent.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/nQzHO1u1Egt5mOAlnFwk/image.jpg"},
+{n:"Eiger",h:3967,range:"Alps",loc:"Switzerland",fa:"1858",blurb:"Famous for its imposing North Face — the Eiger-Nordwand — one of the great technical climbing challenges in the Alps.",extra:"The North Face wasn't climbed until 1938, decades after the peak's easier routes, due to its extreme difficulty.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/OcEqUH1PCe2wQqOnbl3w/image.jpg"},
+{n:"Mount Fuji",h:3776,range:"Fuji Volcanic Zone",loc:"Japan",fa:"663 (recorded)",blurb:"Japan's highest peak and a dormant volcano, one of the most-climbed mountains in the world.",extra:"Long considered sacred, it draws hundreds of thousands of hikers during its short official climbing season.",img:"https://plain-eeur-prod-public.komododecks.com/202609/01/RlzcV3WrEZjVVyNln9XU/image.jpg"},
+{n:"Mount Kenya",h:5199,range:"Eastern Rift",loc:"Kenya",fa:"1899",blurb:"Africa's second-highest peak, with genuine technical rock climbing on its twin summit spires.",extra:"Halford Mackinder led the first ascent of Batian, its highest point.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/Fx7SIluaIKkHbTEMOW2A/image.jpg"},
+{n:"Ama Dablam",h:6812,range:"Himalaya",loc:"Nepal",fa:"1961",blurb:"Widely called one of the most beautiful mountains in the world, with a dramatic hanging glacier below its summit.",extra:"A New Zealand-led team made the first ascent; it remains a benchmark technical climb below 7,000m.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/wadFLU6zz9xwaFhgqwpX/image.jpg"},
+{n:"Mount Cook / Aoraki",h:3724,range:"Southern Alps",loc:"New Zealand",fa:"1894",blurb:"New Zealand's highest peak, considered sacred by Māori and a serious alpine test despite its modest height.",extra:"Its unstable weather and glaciated terrain have made it a formative training ground for generations of Himalayan climbers.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/p61WFFNSXoqPYeTfgaV9/image.jpg"},
+{n:"Mount Logan",h:5959,range:"Saint Elias Mountains",loc:"Canada",fa:"1925",blurb:"Canada's highest peak and the largest mountain massif on Earth by base circumference.",extra:"A Canadian expedition made the first ascent after a brutal month-long approach through extreme cold.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/gm0FlcPJuGe5ONOnS5kc/image.jpg"},
+{n:"Pico de Orizaba",h:5636,range:"Trans-Mexican Volcanic Belt",loc:"Mexico",fa:"1848",blurb:"North America's third-highest peak and its highest volcano, popular for glacier-travel training.",extra:"Its symmetrical cone is visible from the Gulf of Mexico coastline on a clear day.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/AzaLkGcjRQm8GQh51PjV/image.jpg"},
+{n:"Mount Whitney",h:4421,range:"Sierra Nevada",loc:"United States",fa:"1873",blurb:"The highest peak in the contiguous United States, with both a walk-up trail and technical east-face routes.",extra:"A local fishing party made the first recorded ascent via its now-classic hiking trail.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/3ES9JMdKElfObgGJAKst/image.jpg"},
+{n:"Mount Rainier",h:4389,range:"Cascade Range",loc:"United States",fa:"1870",blurb:"A heavily glaciated volcano used as a standard training ground for Himalayan-bound climbers in North America.",extra:"General Hazard Stevens and Philemon Van Trump completed the first documented ascent.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/ABMN5JE3IzWCbw2bqqWp/image.jpg"},
+{n:"Grand Teton",h:4199,range:"Teton Range",loc:"United States",fa:"1898",blurb:"A striking technical peak that anchors the skyline of Wyoming's Teton Range.",extra:"Its Owen-Spalding route remains one of the most climbed technical mountain routes in North America.",img:"https://plain-eeur-prod-public.komododecks.com/202609/01/XjRCqnfTkL5ZcSYv03nK/image.jpg"},
+{n:"Huascaran",h:6768,range:"Andes",loc:"Peru",fa:"1932",blurb:"Peru's highest peak and one of the tallest tropical mountains on Earth.",extra:"A German-Austrian expedition made the first ascent of its higher southern summit.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/V7Fj5CfbgCTUxUpfEstJ/image.jpg"},
+{n:"Chimborazo",h:6263,range:"Andes",loc:"Ecuador",fa:"1880",blurb:"Due to Earth's equatorial bulge, its summit is the point on the planet's surface farthest from the Earth's centre.",extra:"Edward Whymper, of Matterhorn fame, completed its first verified ascent.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/Y9SU0tVkWYGtGvo1enIe/image.jpg"},
+{n:"Mount Olympus",h:2917,range:"Olympus Range",loc:"Greece",fa:"1913",blurb:"Mythologised as the home of the Greek gods, and a popular non-technical high-altitude hike.",extra:"A Swiss-Greek team made the first recorded ascent of Mytikas, its highest peak.",img:"https://plain-eeur-prod-public.komododecks.com/202609/01/x6At83A1RsDdYtXra8Vw/image.jpg"},
+{n:"Ben Nevis",h:1345,range:"Grampian Mountains",loc:"Scotland, UK",fa:"Pre-recorded",blurb:"Britain's highest peak, and a serious winter mountaineering objective despite its modest height.",extra:"Its north face hosts some of the UK's classic winter ice and mixed climbing routes.",img:"https://plain-eeur-prod-public.komododecks.com/202609/01/P0k2IzVDkdBXWNGiw2bL/image.jpg"},
+{n:"Mount Kosciuszko",h:2228,range:"Snowy Mountains",loc:"Australia",fa:"1840",blurb:"Mainland Australia's highest peak, and the gentlest of the traditional Seven Summits.",extra:"Named by Polish explorer Paul Strzelecki after a Polish national hero.",img:"https://plain-eeur-prod-public.komododecks.com/202609/01/iMp94dZfI0SvzlPCTJjH/image.jpg"},
+{n:"Table Mountain",h:1085,range:"Cape Fold Belt",loc:"South Africa",fa:"1503",blurb:"A flat-topped landmark overlooking Cape Town, with routes ranging from an easy cable car to serious rock climbs.",extra:"Portuguese explorer António de Saldanha is credited with the first recorded ascent.",img:"https://plain-eeur-prod-public.komododecks.com/202609/01/2ohmTj0KrfrAzuUf1qKg/image.jpg"},
+{n:"Mount Elgon",h:4321,range:"Elgon Volcanic Massif",loc:"Uganda / Kenya",fa:"Locally climbed for centuries",blurb:"An enormous extinct shield volcano with one of the largest calderas in the world.",extra:"Its slopes host caves used historically by local communities and elephants seeking mineral salts.",img:"https://plain-eeur-prod-public.komododecks.com/202609/01/T3mris6am3sFSA7eUC46/image.jpg"},
+{n:"Cerro Torre",h:3128,range:"Patagonian Andes",loc:"Argentina / Chile",fa:"1974 (undisputed)",blurb:"A granite spire often called the world's hardest mountain to climb, famous for its ice-mushroom summit cap.",extra:"Its first ascent was long disputed until an Italian team's climb was confirmed in 1974.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/kqTNuKVDeL2mFUqSJzb0/image.jpg"},
+{n:"Fitz Roy",h:3405,range:"Patagonian Andes",loc:"Argentina",fa:"1952",blurb:"A jagged granite tower in Patagonia, considered one of the world's premier big-wall alpine objectives.",extra:"French climbers Lionel Terray and Guido Magnone made the demanding first ascent.",img:"https://plain-eeur-prod-public.komododecks.com/202609/01/9XoyU9yXktQS10Ysdjg5/image.jpg"},
+];
+
+const pakistanMountains = [
+{n:"K2 (Chogori)",h:8611,range:"Karakoram",loc:"Gilgit-Baltistan, Pakistan",fa:"1954",blurb:"The world's second-highest mountain, and Pakistan's greatest mountaineering landmark.",extra:"Sits on the Pakistan–China border above the Baltoro Glacier; its first winter ascent in 2021 was a global milestone.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/ZAmHjRB22vMFHFFw864o/image.jpg"},
+{n:"Nanga Parbat",h:8126,range:"Himalaya",loc:"Gilgit-Baltistan, Pakistan",fa:"1953",blurb:"The westernmost eight-thousander, standing almost alone above the Indus valley — 'Killer Mountain'.",extra:"Its Rupal Face is one of the tallest mountain faces on Earth, over 4,600m of continuous relief.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/saQC3YS8v0PIkDSjE5xe/image.jpg"},
+{n:"Gasherbrum I",h:8080,range:"Karakoram",loc:"Gilgit-Baltistan, Pakistan",fa:"1958",blurb:"Also called Hidden Peak, tucked deep in the Karakoram behind the Baltoro Glacier.",extra:"Frequently climbed in tandem with Gasherbrum II by expeditions based at Concordia.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/moAebL5uHKYUKYp8w8EH/image.jpg"},
+{n:"Broad Peak",h:8051,range:"Karakoram",loc:"Gilgit-Baltistan, Pakistan",fa:"1957",blurb:"Named for its wide summit ridge, and a near neighbour of K2 across the Godwin-Austen Glacier.",extra:"Its central and true summits are sometimes mistaken for one another, a source of several disputed 'summit' claims.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/BYcXPry7gi6i2vY8pckn/image.jpg"},
+{n:"Gasherbrum II",h:8035,range:"Karakoram",loc:"Gilgit-Baltistan, Pakistan",fa:"1956",blurb:"One of the more approachable eight-thousanders technically, popular as a Karakoram training peak.",extra:"A common warm-up ascent for climbers aiming to attempt K2 in the same season.",img:"https://plain-eeur-prod-public.komododecks.com/202608/31/KbtuDLTXCtN3GSJrwzyH/image.jpg"},
+{n:"Gasherbrum III",h:7952,range:"Karakoram",loc:"Gilgit-Baltistan, Pakistan",fa:"1975",blurb:"The world's highest peak that falls just short of eight-thousander status.",extra:"A Polish expedition, including Wanda Rutkiewicz, made its first ascent.",img:"https://plain-eeur-prod-public.komododecks.com/202609/01/11A79Gr5KkLwX2WsMwoM/image.jpg"},
+{n:"Gasherbrum IV",h:7932,range:"Karakoram",loc:"Gilgit-Baltistan, Pakistan",fa:"1958",blurb:"Renowned for its sheer, dramatically fluted rock face rather than sheer altitude.",extra:"An Italian team including Walter Bonatti completed a first ascent regarded as a technical landmark.",img:"https://plain-eeur-prod-public.komododecks.com/202609/01/fKL5UUTOdwxDw0C0hIgK/image.jpg"},
+{n:"Distaghil Sar",h:7884,range:"Karakoram",loc:"Gilgit-Baltistan, Pakistan",fa:"1960",blurb:"The highest peak of the Hispar Muztagh sub-range, remote even by Karakoram standards.",extra:"An Austro-German expedition completed its first ascent after a lengthy approach.",img:"https://plain-eeur-prod-public.komododecks.com/202609/01/TvvBEHKQxanBIvwp9ttg/image.jpg"},
+{n:"Kunyang Chhish",h:7823,range:"Karakoram",loc:"Gilgit-Baltistan, Pakistan",fa:"1971",blurb:"One of the least-visited major Karakoram peaks, prized by expedition climbers for its isolation.",extra:"A Polish expedition achieved the first ascent of its main summit.",img:"https://plain-eeur-prod-public.komododecks.com/202609/01/zj6EA5JSRYReXaYCjgzn/image.jpg"},
+{n:"Masherbrum (K1)",h:7821,range:"Karakoram",loc:"Gilgit-Baltistan, Pakistan",fa:"1960",blurb:"The first Karakoram peak ever surveyed and labelled 'K1', long before K2 became famous.",extra:"An American expedition completed the first ascent via its southeast face.",img:"https://plain-eeur-prod-public.komododecks.com/202609/01/NxQliRj1RYNNujmM2hVa/image.jpg"},
+{n:"Rakaposhi",h:7788,range:"Karakoram",loc:"Gilgit-Baltistan, Pakistan",fa:"1958",blurb:"Rises with one of the greatest uninterrupted vertical drops on Earth, straight from the Hunza valley floor.",extra:"A British-Pakistani team completed the first ascent via its northeast spur.",img:"https://plain-eeur-prod-public.komododecks.com/202609/01/Kq6zCHEn5Hpa588fjV48/image.jpg"},
+{n:"Batura Sar",h:7795,range:"Karakoram",loc:"Gilgit-Baltistan, Pakistan",fa:"1976",blurb:"The highest peak of the Batura Muztagh, overlooking the Hunza valley's Batura Glacier.",extra:"A German-Pakistani expedition made the first ascent of its main summit.",img:"https://plain-eeur-prod-public.komododecks.com/202609/01/GobGjOXxoP6har1b4fe5/image.jpg"},
+{n:"Trango Towers (Nameless Tower)",h:6286,range:"Karakoram",loc:"Gilgit-Baltistan, Pakistan",fa:"1976",blurb:"A cluster of granite big-wall spires regarded as one of the finest rock-climbing destinations on Earth.",extra:"A British expedition made the first ascent of the iconic Nameless Tower.",img:"https://plain-eeur-prod-public.komododecks.com/202609/01/SHeTd7C0GnGO2xQSrRpw/image.jpg"},
+{n:"Malubiting",h:7458,range:"Karakoram",loc:"Gilgit-Baltistan, Pakistan",fa:"1971",blurb:"A remote and rarely attempted Karakoram giant, overlooking the Rakaposhi range.",extra:"A German-Pakistani expedition completed the first ascent of its main summit.",img:"https://plain-eeur-prod-public.komododecks.com/202609/01/GpVzmMVIIPdRLq7GKnX5/image.jpg"},
+{n:"Tirich Mir",h:7708,range:"Hindu Kush",loc:"Chitral, Pakistan",fa:"1950",blurb:"The highest peak of the Hindu Kush range and Chitral's defining landmark.",extra:"A Norwegian expedition made the first ascent, opening the Hindu Kush to modern mountaineering.",img:"https://plain-eeur-prod-public.komododecks.com/202609/01/Dum3n8cK2OnFWg1OGDBT/image.jpg"},
+{n:"Passu Peak",h:7478,range:"Karakoram",loc:"Gilgit-Baltistan, Pakistan",fa:"1978",blurb:"Overlooks the dramatic Passu Cones and Batura Glacier along the Karakoram Highway.",extra:"A Japanese expedition achieved the first recorded ascent.",img:"https://plain-eeur-prod-public.komododecks.com/202609/01/N4mUzKVFEltEVuJsKmlP/image.jpg"},
+{n:"Spantik (Golden Peak)",h:7027,range:"Karakoram",loc:"Gilgit-Baltistan, Pakistan",fa:"1955",blurb:"Named for the golden glow of its summit ridge at sunset, and a popular 7,000m objective for acclimatisation.",extra:"A German-Austrian team completed the first ascent via its long northern ridge.",img:"https://plain-eeur-prod-public.komododecks.com/202609/01/ChdxRDFyxvxzgm8Kri6a/image.jpg"},
+{n:"Diran Peak",h:7266,range:"Karakoram",loc:"Gilgit-Baltistan, Pakistan",fa:"1968",blurb:"A striking pyramid peak above the Minapin valley, popular for its relatively short approach.",extra:"An Austrian expedition made the first ascent via its northwest ridge.",img:"https://plain-eeur-prod-public.komododecks.com/202609/01/omInQkucvuX15CrMON1i/image.jpg"},
+{n:"Laila Peak",h:6096,range:"Karakoram",loc:"Gilgit-Baltistan, Pakistan",fa:"1987",blurb:"An elegant, needle-sharp spire above the Hushe valley, one of the most photographed peaks in the Karakoram.",extra:"A Japanese-Pakistani expedition made the first ascent of its technical summit pyramid.",img:"https://plain-eeur-prod-public.komododecks.com/202609/01/IgfuiXifJ6HkkLJKb5lW/image.jpg"},
+{n:"Haramosh Peak",h:7397,range:"Karakoram",loc:"Gilgit-Baltistan, Pakistan",fa:"1958",blurb:"A dramatic, avalanche-prone peak overlooking the Haramosh valley near Skardu.",extra:"A German expedition made the first ascent after earlier attempts ended in tragedy.",img:"https://plain-eeur-prod-public.komododecks.com/202609/01/jx15qQv7fVIHkCqXSUkA/image.jpg"},
+];
+
+
+const clubs = [
+{name:"Alpine Club of Pakistan", city:"Islamabad, Pakistan", lat:33.6844, lng:73.0479, blurb:"Pakistan's national mountaineering federation, coordinating permits and expeditions across the Karakoram and Himalaya."},
+{name:"The Alpine Club (UK)", city:"London, United Kingdom", lat:51.5225, lng:-0.1590, blurb:"Founded in 1857 — the world's first mountaineering club, and still an active publisher of climbing records."},
+{name:"American Alpine Club", city:"Golden, Colorado, USA", lat:39.7555, lng:-105.2211, blurb:"A national climbing organisation offering expedition grants, rescue insurance, and a major mountaineering library."},
+{name:"Nepal Mountaineering Association", city:"Kathmandu, Nepal", lat:27.7172, lng:85.3240, blurb:"Manages permits and safety standards for Nepal's trekking peaks, and promotes Sherpa mountaineering education."},
+{name:"UIAA — International Climbing Federation", city:"Bern, Switzerland", lat:46.9480, lng:7.4474, blurb:"The global governing body setting safety standards for climbing equipment and mountaineering ethics worldwide."},
+{name:"Alpine Club of Canada", city:"Canmore, Alberta, Canada", lat:51.0891, lng:-115.3594, blurb:"Runs huts and guided ascents across the Canadian Rockies and Coast Mountains since 1906."},
+{name:"British Mountaineering Council", city:"Manchester, United Kingdom", lat:53.4808, lng:-2.2426, blurb:"Represents hillwalkers and climbers across England and Wales, from crag access to expedition safety guidance."},
+{name:"Japanese Alpine Club", city:"Tokyo, Japan", lat:35.6762, lng:139.6503, blurb:"One of Asia's oldest mountaineering societies, historically active on Himalayan and Karakoram first ascents."},
+{name:"Naran Snooker & Trout Club", city:"Naran, Khyber Pakhtunkhwa, Pakistan", lat:34.9042, lng:73.6480, blurb:"A riverside clubhouse on the Kunhar River with a snooker and pool room — a favourite last stop for trekking parties before they head into Kaghan's high valleys."},
+{name:"Shangrila Lake Resort & Boat Club", city:"Skardu, Gilgit-Baltistan, Pakistan", lat:35.3178, lng:75.6790, blurb:"A lakeside retreat on the crystal-clear waters of Lower Kachura Lake — a scenic rest stop for climbers acclimatising before Karakoram expeditions."},
+{name:"Neelum Riverside Anglers' Club", city:"Neelum Valley, Azad Kashmir, Pakistan", lat:34.6100, lng:73.8500, blurb:"A trout-fishing and riverside social club on the Neelum River, set against the pine-forested slopes of Azad Kashmir."},
+];
+
+
+const galleryItems = [
+ {cat:"expedition", label:"Base Camp Approach", img:"https://plain-eeur-prod-public.komododecks.com/202609/02/tFyLMjyFcr5KGGF9iVyJ/image.jpg"},
+ {cat:"summit", label:"First Light on the Ridge", img:"https://plain-eeur-prod-public.komododecks.com/202609/02/p0VjNTO3sxRKOCSITbvh/image.jpg"},
+ {cat:"technique", label:"Roped Glacier Travel", img:"https://plain-eeur-prod-public.komododecks.com/202609/02/mhSLA5g8rnpAzpyndnsp/image.jpg"},
+ {cat:"basecamp", label:"Camp II, Storm Day", img:"https://plain-eeur-prod-public.komododecks.com/202609/02/HwFVwQ34jJk5JsbnJoAG/image.jpg"},
+ {cat:"technique", label:"Ice Axe Self-Arrest Drill", img:"https://plain-eeur-prod-public.komododecks.com/202609/02/whADembTbgZPAmQYl6ut/image.jpg"},
+ {cat:"expedition", label:"Fixed Line, Karakoram", img:"https://plain-eeur-prod-public.komododecks.com/202609/02/6a6qGCy9rdZeN0zNDwLy/image.jpg"},
+ {cat:"summit", label:"Summit Ridge, Windward Side", img:"https://plain-eeur-prod-public.komododecks.com/202609/02/bPL7Rh7v7J22KvKJRMXV/image.jpg"},
+ {cat:"basecamp", label:"Basecamp Kitchen Tent", img:"https://plain-eeur-prod-public.komododecks.com/202609/02/xRRGfOI2QCwoRSYkaIAu/image.jpg"},
+];
+
+
+function mtnArt(m, seed){
+  if(m && m.img){
+    // Fixed-height box + object-fit:cover below keeps every card/photo the same
+    // size regardless of the source image's own dimensions — no letterboxing,
+    // no per-image aspect-ratio resizing, just a uniform crop-to-fill.
+    return `<img src="${m.img}" alt="${m.n}" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;">`;
+  }
+  return mtnArtSVG(seed);
+}
+function mtnArtSVG(seed){
+  const palettes = [
+    ["#E4EEF0","#0B5FA5","#B5121B"],
+    ["#EAE3D2","#B5121B","#1E2A30"],
+    ["#F6F3EC","#8F0F17","#5B6B72"],
+  ];
+  const p = palettes[seed % palettes.length];
+  return `<svg viewBox="0 0 300 110" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="300" height="110" fill="${p[0]}"/>
+    <polygon points="0,110 60,30 100,70 150,15 210,75 260,40 300,110" fill="${p[1]}" opacity="0.85"/>
+    <polygon points="90,110 150,15 190,60 230,110" fill="${p[2]}" opacity="0.5"/>
+    <circle cx="252" cy="26" r="10" fill="#F4C77A" opacity="0.95"/>
+  </svg>`;
+}
+function galArt(g, i){
+  if(g && g.img){
+    return `<img src="${g.img}" alt="${g.label}" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;">`;
+  }
+  return galArtSVG(i);
+}
+function galArtSVG(i){
+  const hues = ["#B5121B","#0B5FA5","#5B6B72","#8F0F17"];
+  const c = hues[i % hues.length];
+  return `<svg viewBox="0 0 200 150" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="150" fill="#E4EEF0"/>
+    <polygon points="0,150 50,60 90,110 130,40 170,90 200,60 200,150" fill="${c}" opacity="0.8"/>
+    <rect width="200" height="150" fill="url(#g${i})" opacity="0.25"/>
+    <defs><linearGradient id="g${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="transparent"/></linearGradient></defs>
+  </svg>`;
+}
+
+
+function vrSceneSVG(theme){
+  const V = '0 0 400 220';
+  const scenes = {
+    /* Pakistan's green mountain regions — KP, Gilgit-Baltistan, Azad Kashmir */
+    pk: {
+      sky:  `<svg viewBox="${V}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="220" fill="#BFE3E0"/><circle cx="332" cy="44" r="24" fill="#FFF6D8"/></svg>`,
+      mid:  `<svg viewBox="${V}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><polygon points="0,220 70,70 140,150 210,50 280,140 340,80 400,220" fill="#9FC9C4" opacity="0.9"/><polygon points="0,220 40,140 90,200 130,120 400,220" fill="#EAF3EF" opacity="0.65"/></svg>`,
+      near: `<svg viewBox="${V}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><polygon points="0,220 60,120 130,190 190,110 260,190 340,130 400,220" fill="#2F7D4F"/><g fill="#1F5C39"><ellipse cx="70" cy="205" rx="26" ry="14"/><ellipse cx="150" cy="212" rx="30" ry="15"/><ellipse cx="250" cy="206" rx="28" ry="14"/><ellipse cx="330" cy="212" rx="24" ry="12"/></g></svg>`
+    },
+    
+    clubs: {
+      sky:  `<svg viewBox="${V}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="220" fill="#DDEFF7"/></svg>`,
+      mid:  `<svg viewBox="${V}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><polygon points="0,220 90,90 180,160 260,80 400,180 400,220" fill="#8FB8C9" opacity="0.85"/></svg>`,
+      near: `<svg viewBox="${V}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><rect y="172" width="400" height="48" fill="#1E4F63"/><rect x="18" y="146" width="130" height="74" rx="6" fill="#0B2A38"/><rect x="30" y="160" width="106" height="46" rx="3" fill="#0F3A4C"/><circle cx="60" cy="188" r="5" fill="#E4C34A"/><circle cx="85" cy="192" r="5" fill="#fff"/><circle cx="110" cy="185" r="5" fill="#B5121B"/><rect x="255" y="140" width="126" height="80" rx="6" fill="#0B2A38"/><rect x="272" y="158" width="90" height="8" fill="#2F7D4F"/></svg>`
+    },
+    
+    gallery: {
+      sky:  `<svg viewBox="${V}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="220" fill="#EAD9E4"/></svg>`,
+      mid:  `<svg viewBox="${V}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><polygon points="0,220 90,60 170,150 250,50 330,140 400,90 400,220" fill="#B5121B" opacity="0.5"/><polygon points="0,220 60,150 130,200 200,120 280,200 400,140 400,220" fill="#0B5FA5" opacity="0.45"/></svg>`,
+      near: `<svg viewBox="${V}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><polygon points="0,220 60,140 130,200 210,110 300,200 400,150 400,220" fill="#2F7D4F"/><rect y="196" width="400" height="24" fill="#0B5FA5" opacity="0.55"/></svg>`
+    },
+    
+    winter: {
+      sky:  `<svg viewBox="${V}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="220" fill="#0E2233"/><circle cx="320" cy="50" r="20" fill="#DCEBFA"/></svg>`,
+      mid:  `<svg viewBox="${V}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><polygon points="0,220 80,60 160,140 220,40 300,140 400,60 400,220" fill="#3A5B72" opacity="0.9"/></svg>`,
+      near: `<svg viewBox="${V}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><polygon points="0,220 70,90 150,180 210,70 290,180 400,90 400,220" fill="#E9F3FB"/></svg>`
+    }
+  };
+  return scenes[theme] || scenes.pk;
+}
+
+const BIRD_SVG = '<svg viewBox="0 0 32 16" xmlns="http://www.w3.org/2000/svg"><path d="M0 8 Q8 -4 16 8 Q24 -4 32 8" fill="none" stroke="#1E2A30" stroke-width="2.4" stroke-linecap="round"/></svg>';
+const WATER_THEMES = {pk:1, clubs:1, gallery:1}; // themes whose art already shows a river/lake
+
+function motionLayerHTML(theme, isPhoto){
+  const birds = [
+    {top:'18%', dur:'9s',  delay:'0s'},
+    {top:'32%', dur:'12s', delay:'2.4s'},
+    {top:'12%', dur:'10s', delay:'5s'}
+  ].map(b=>`<span class="vr-bird" style="top:${b.top}; animation-duration:${b.dur}; animation-delay:${b.delay};">${BIRD_SVG}</span>`).join('');
+
+  const hasWater = !isPhoto && WATER_THEMES[theme];
+  const water = hasWater ? '<div class="vr-water"></div>' : '';
+  const mist = (theme === 'winter' || isPhoto) ? '<div class="vr-mist"></div>' : '';
+
+  return `<div class="vr-motion-layer">${birds}${water}${mist}</div>`;
+}
+
+function mountVR(containerId, theme, badgeText, imgSrc){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  let layersHTML;
+  const isPhoto = !!imgSrc;
+  if(isPhoto){
+    
+    layersHTML = `<div class="vr-layer-photo" data-depth="8" style="z-index:1">
+      <img src="${imgSrc}" alt="${badgeText}">
+    </div>`;
+  } else {
+    const scene = vrSceneSVG(theme);
+    layersHTML = `
+    <div class="vr-layer" data-depth="4" style="z-index:1">${scene.sky}</div>
+    <div class="vr-layer" data-depth="16" style="z-index:2">${scene.mid}</div>
+    <div class="vr-layer" data-depth="34" style="z-index:3">${scene.near}</div>`;
+  }
+  const hintText = isPhoto ? 'Move your mouse or tilt your phone to look around' : 'Move your mouse to look around';
+  const motionSVG = {
+    play:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+    pause:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>'
+  };
+  el.innerHTML = `
+    ${layersHTML}
+    ${motionLayerHTML(theme, isPhoto)}
+    <span class="vr-badge">${badgeText}</span>
+    <button type="button" class="vr-motion-btn" id="${containerId}-motion">${motionSVG.play}<span>Enable motion</span></button>
+    <span class="vr-hint">${hintText}</span>`;
+  const layers = el.querySelectorAll('.vr-layer, .vr-layer-photo');
+
+  
+  const motionBtn = el.querySelector(`#${containerId}-motion`);
+  if(motionBtn){
+    motionBtn.addEventListener('click', function(e){
+      e.stopPropagation();
+      const isLive = el.classList.toggle('vr-live');
+      motionBtn.innerHTML = isLive
+        ? `${motionSVG.pause}<span>Stop motion</span>`
+        : `${motionSVG.play}<span>Enable motion</span>`;
+    });
+  }
+
+  
+  if(isPhoto){
+    const imgEl = el.querySelector('img');
+    const fitBox = ()=>{
+      if(imgEl.naturalWidth && imgEl.naturalHeight){
+        el.style.aspectRatio = `${imgEl.naturalWidth} / ${imgEl.naturalHeight}`;
+        el.style.height = 'auto';
+      }
+    };
+    if(imgEl.complete) fitBox(); else imgEl.addEventListener('load', fitBox, {once:true});
+  }
+
+  function applyOffset(px, py){
+    layers.forEach(l=>{
+      const d = parseFloat(l.dataset.depth);
+      if(isPhoto){
+        
+        l.querySelector('img').style.transform = `rotateY(${(px*d).toFixed(2)}deg) rotateX(${(-py*d*0.7).toFixed(2)}deg)`;
+      } else {
+        l.style.transform = `translate(${(-px*d).toFixed(1)}px, ${(-py*d*0.6).toFixed(1)}px)`;
+      }
+    });
+  }
+  function place(clientX, clientY){
+    const r = el.getBoundingClientRect();
+    const px = ((clientX - r.left) / r.width) - 0.5;
+    const py = ((clientY - r.top) / r.height) - 0.5;
+    applyOffset(px, py);
+  }
+
+  
+  el.addEventListener('mousemove', (e)=>place(e.clientX, e.clientY));
+  el.addEventListener('mouseleave', ()=>{ applyOffset(0,0); });
+
+  
+  el.addEventListener('touchmove', (e)=>{
+    if(!e.touches[0]) return;
+    place(e.touches[0].clientX, e.touches[0].clientY);
+  }, {passive:true});
+
+  
+  if(window.DeviceOrientationEvent){
+    let baseGamma = null, baseBeta = null;
+    const onTilt = (e)=>{
+      if(e.gamma === null || e.beta === null) return;
+      if(baseGamma === null){ baseGamma = e.gamma; baseBeta = e.beta; }
+      const dx = (e.gamma - baseGamma) / 30;   // left/right tilt
+      const dy = (e.beta - baseBeta) / 30;     // forward/back tilt
+      const px = Math.max(-0.5, Math.min(0.5, dx));
+      const py = Math.max(-0.5, Math.min(0.5, dy));
+      applyOffset(px, py);
+    };
+    const enableTilt = ()=>{
+      if(typeof DeviceOrientationEvent.requestPermission === 'function'){
+        DeviceOrientationEvent.requestPermission().then(state=>{
+          if(state === 'granted') window.addEventListener('deviceorientation', onTilt);
+        }).catch(()=>{});
+      } else {
+        window.addEventListener('deviceorientation', onTilt);
+      }
+    };
+    
+    el.addEventListener('touchstart', enableTilt, {once:true, passive:true});
+    if(typeof DeviceOrientationEvent.requestPermission !== 'function'){
+      enableTilt();
+    }
+  }
+}
+
+
+(function(){
+  let svg = '<svg viewBox="0 0 1200 500" preserveAspectRatio="xMidYMid slice">';
+  for(let i=0;i<9;i++){
+    const yOff = 60 + i*42;
+    svg += `<path d="M0 ${yOff} Q 200 ${yOff-40} 400 ${yOff} T 800 ${yOff} T 1200 ${yOff-20}" stroke="#0B5FA5" stroke-width="1" fill="none" opacity="${0.08+i*0.025}"/>`;
+  }
+  svg += '</svg>';
+  document.getElementById('contourSvg').innerHTML = svg;
+})();
+
+
+function wikiUrl(name){
+  return `https://en.wikipedia.org/wiki/${encodeURIComponent(name.replace(/\s*\(.*?\)\s*/g,'').trim().replace(/ /g,'_'))}`;
+}
+function renderPeakDetail(){
+  const params = new URLSearchParams(location.search);
+  const peakName = params.get('peak');
+  if(!peakName) return false;
+
+  const region = params.get('region') === 'pakistan' ? 'pakistan' : 'world';
+  const list = region === 'pakistan' ? pakistanMountains : worldMountains;
+  const m = list.find(x => x.n === peakName) || worldMountains.find(x => x.n === peakName) || pakistanMountains.find(x => x.n === peakName);
+  if(!m) return false;
+
+  document.title = m.n + ' — Alpine Ascents';
+  const idx = list.indexOf(m);
+  const rank = list.slice().sort((a,b)=>b.h-a.h).findIndex(x=>x.n===m.n)+1;
+  const backHref = location.pathname + '#mountains';
+  const related = list.filter(x=>x.n!==m.n).sort(()=>0.5-Math.random()).slice(0,3);
+
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('visible'));
+  const detail = document.getElementById('page-detail');
+  detail.innerHTML = `
+    <div class="wrap">
+      <a href="${backHref}" class="btn btn-ghost" style="margin-bottom:28px; padding:9px 16px; font-size:12.5px;">← Back to Peaks Database</a>
+      <span class="eyebrow">${region==='world'?'World Peak':'Pakistan Peak'} · ${m.range} · №${String(rank).padStart(2,'0')} by elevation</span>
+      <h2 style="margin-top:10px; max-width:720px;">${m.n}</h2>
+      <div class="modal-art" style="height:190px; margin:22px 0; max-width:720px;">${mtnArt(m, idx<0?0:idx)}</div>
+      <div class="modal-stats" style="grid-template-columns:repeat(4,minmax(0,1fr)); max-width:640px;">
+        <div><span class="k">Elevation</span><span class="v">${m.h.toLocaleString()} m</span></div>
+        <div><span class="k">Range</span><span class="v">${m.range}</span></div>
+        <div><span class="k">Location</span><span class="v">${m.loc}</span></div>
+        <div><span class="k">First Ascent</span><span class="v">${m.fa}</span></div>
+      </div>
+      <p style="color:var(--ink); font-size:16.5px; max-width:720px; margin-top:22px;">${m.blurb}</p>
+      <p style="color:var(--muted); font-size:14.5px; max-width:720px;">${m.extra}</p>
+      <div class="hero-cta" style="margin-top:12px;">
+        <a href="${wikiUrl(m.n)}" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Further details — view source ↗</a>
+        <a href="${backHref}" class="btn btn-ghost">Explore more peaks</a>
+      </div>
+      ${related.length ? `
+      <div class="sec-head" style="margin-top:64px;">
+        <span class="eyebrow">Nearby on the list</span>
+        <h2 style="font-size:26px;">A few more to explore</h2>
+      </div>
+      <div class="mtn-grid">
+        ${related.map(r=>{
+          const rIdx = list.indexOf(r);
+          return `<a class="mtn-card" href="?peak=${encodeURIComponent(r.n)}&region=${region}" target="_blank" rel="noopener" title="Opens the full profile for ${r.n} in a new tab">
+            <div class="mtn-art">${mtnArt(r, rIdx)}</div>
+            <div class="mtn-body">
+              <h4>${r.n}</h4>
+              <div class="loc">${r.range} · ${r.loc}</div>
+              <div class="stat-row"><span>${r.h.toLocaleString()} M</span><span>FA ${r.fa}</span></div>
+              <span class="explore-link">Explore full profile ↗</span>
+            </div>
+          </a>`;
+        }).join('')}
+      </div>` : ''}
+    </div>`;
+  detail.classList.add('visible');
+  window.scrollTo({top:0});
+  return true;
+}
+
+
+const pages = document.querySelectorAll('.page');
+const navLinks = document.querySelectorAll('a[data-route]');
+let currentRegion = 'world'; // Peaks Database region toggle — declared early so the video loader can read it on first paint
+
+function showRoute(route){
+  if(!document.getElementById('page-'+route)) route = 'home';
+  pages.forEach(p=>{
+    if(p.id === 'page-'+route){
+      p.classList.add('visible');
+    } else if(p.classList.contains('visible')){
+      p.classList.add('fading-out');
+      setTimeout(()=>{p.classList.remove('visible','fading-out');}, 260);
+    } else {
+      p.classList.remove('visible');
+    }
+  });
+  navLinks.forEach(a=>{
+    a.classList.toggle('active', a.dataset.route === route);
+  });
+  document.getElementById('mainMenu').classList.remove('open');
+  loadPageVideo(route);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+const pageVideoMap = {
+  about:      {src:'https://videos.pexels.com/video-files/12202611/12202611-uhd_2560_1440_30fps.mp4', poster:'https://images.pexels.com/videos/12202611/maountains-mountain-background-mountain-cliff-mountain-landscape-12202611.jpeg?auto=compress&cs=tinysrgb&w=1600', region:'world', title:'A Climber\'s Ascent — Everest Summit Push'},
+  records:    {src:'https://videos.pexels.com/video-files/5895501/5895501-uhd_2560_1440_25fps.mp4',   poster:'https://images.pexels.com/videos/5895501/pexels-photo-5895501.jpeg?auto=compress&cs=tinysrgb&w=1600', region:'pk',    title:'K2 — The King of Mountains (Karakoram, Pakistan)'},
+  clubs:      {src:'https://videos.pexels.com/video-files/5895504/5895504-uhd_2560_1440_25fps.mp4',   poster:'https://images.pexels.com/videos/5895504/pexels-photo-5895504.jpeg?auto=compress&cs=tinysrgb&w=1600', region:'pk',    title:'Mission Broad Peak — Karakoram, Pakistan'},
+  gallery:    {src:'https://videos.pexels.com/video-files/2040076/2040076-hd_1920_1080_24fps.mp4',     poster:'https://images.pexels.com/videos/2040076/free-video-2040076.jpg?auto=compress&cs=tinysrgb&w=1600', region:'world', title:'Mountain Climbers on a Summit'},
+  latest:     {src:'https://videos.pexels.com/video-files/32200823/13733155_2560_1440_60fps.mp4',     poster:'https://images.pexels.com/videos/32200823/pexels-photo-32200823.jpeg?auto=compress&cs=tinysrgb&w=1600', region:'pk',    title:'The Three-Year Winter Ascent of Nanga Parbat, Pakistan'},
+  guidelines: {src:'https://videos.pexels.com/video-files/2021532/2021532-hd_1920_1080_24fps.mp4',     poster:'https://images.pexels.com/videos/2021532/free-video-2021532.jpg?auto=compress&cs=tinysrgb&w=1600', region:'world', title:'Alpine Ridgeline — Before You Rope Up'},
+  feedback:   {src:'https://videos.pexels.com/video-files/8415207/8415207-uhd_2560_1440_25fps.mp4',   poster:'https://images.pexels.com/videos/8415207/pexels-photo-8415207.jpeg?auto=compress&cs=tinysrgb&w=1600', region:'world', title:'Sunrise Over the Mountain Top'}
+};
+const mountainsClips = {
+  world:    {src:'https://videos.pexels.com/video-files/5895501/5895501-uhd_2560_1440_25fps.mp4', poster:'https://images.pexels.com/videos/5895501/pexels-photo-5895501.jpeg?auto=compress&cs=tinysrgb&w=1600', title:'Snowbound Ridgeline — Worldwide Peaks'},
+  pakistan: {src:'https://videos.pexels.com/video-files/5895504/5895504-uhd_2560_1440_25fps.mp4',  poster:'https://images.pexels.com/videos/5895504/pexels-photo-5895504.jpeg?auto=compress&cs=tinysrgb&w=1600', title:'Karakoram, Pakistan — Peaks Database'}
+};
+
+function stopAllPageVideos(){
+  document.querySelectorAll('.page-video-band video').forEach(v=>{ v.pause(); });
+}
+
+function playBandClip(band, clip, region){
+  if(!band) return;
+  const video = band.querySelector('video');
+  if(video){
+    if(clip.poster) video.poster = clip.poster;
+    if(video.dataset.src !== clip.src){
+      video.dataset.src = clip.src;
+      video.src = clip.src;
+      video.onerror = function(){
+        // If the MP4 ever 404s/can't decode, fall back to the poster still instead
+        // of a broken/black box — the band still looks intentional either way.
+        video.style.display = 'none';
+        band.style.backgroundImage = clip.poster ? `url('${clip.poster}')` : '';
+        band.style.backgroundSize = 'cover';
+        band.style.backgroundPosition = 'center';
+      };
+    }
+    video.currentTime = 0; video.play().catch(()=>{});
+  }
+  const tag = band.querySelector('.pvb-tag') || document.getElementById(band.id+'-tag');
+  const caption = band.querySelector('.pvb-caption') || document.getElementById(band.id+'-caption');
+  if(tag){
+    tag.textContent = region === 'pk' ? 'Pakistan · Nationwide' : 'Worldwide';
+    tag.classList.toggle('pk', region === 'pk');
+    tag.classList.toggle('world', region !== 'pk');
+  }
+  if(caption) caption.textContent = clip.title;
+}
+
+function setMountainsClip(region){
+  const clip = mountainsClips[region] || mountainsClips.world;
+  playBandClip(document.getElementById('pvb-mountains'), clip, region === 'pakistan' ? 'pk' : 'world');
+}
+
+function loadPageVideo(route){
+  stopAllPageVideos();
+  if(route === 'mountains'){ setMountainsClip(currentRegion); return; }
+  const clip = pageVideoMap[route];
+  if(!clip) return; // home keeps its own hero video; other unmapped pages have none
+  playBandClip(document.getElementById('pvb-'+route), clip, clip.region);
+}
+
+navLinks.forEach(a=>{
+  a.addEventListener('click', (e)=>{
+    e.preventDefault();
+    const route = a.dataset.route;
+    history.pushState(null,'','#'+route);
+    showRoute(route);
+  });
+});
+window.addEventListener('popstate', ()=>{
+  showRoute(location.hash.replace('#','') || 'home');
+});
+if(!renderPeakDetail()){
+  showRoute(location.hash.replace('#','') || 'home');
+}
+
+document.getElementById('menuToggle').addEventListener('click', ()=>{
+  document.getElementById('mainMenu').classList.toggle('open');
+});
+
+
+document.getElementById('aboutPills').addEventListener('click', (e)=>{
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  document.querySelectorAll('#aboutPills button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.subpane').forEach(s=>s.classList.remove('visible'));
+  document.getElementById('pane-'+btn.dataset.pane).classList.add('visible');
+});
+
+
+const mtnGrid = document.getElementById('mtnGrid');
+
+function renderMountains(){
+  let list = (currentRegion === 'world' ? worldMountains : pakistanMountains).slice();
+  const q = document.getElementById('mtnSearch').value.trim().toLowerCase();
+  if(q){
+    list = list.filter(m => (m.n+m.range+m.loc).toLowerCase().includes(q));
+  }
+  const sortBy = document.getElementById('mtnSort').value;
+  list.sort((a,b)=> sortBy === 'height' ? b.h - a.h : a.n.localeCompare(b.n));
+
+  mtnGrid.innerHTML = list.map((m, i)=>{
+    const rank = (currentRegion==='world'?worldMountains:pakistanMountains).slice().sort((a,b)=>b.h-a.h).findIndex(x=>x.n===m.n)+1;
+    const detailHref = `?peak=${encodeURIComponent(m.n)}&region=${currentRegion}`;
+    return `<a class="mtn-card" href="${detailHref}" target="_blank" rel="noopener" data-name="${m.n}" title="Opens the full profile for ${m.n} in a new tab">
+      <div class="mtn-art">${mtnArt(m, i)}<span class="mtn-rank">№${String(rank).padStart(2,'0')}</span></div>
+      <div class="mtn-body">
+        <h4>${m.n}</h4>
+        <div class="loc">${m.range} · ${m.loc}</div>
+        <p class="blurb">${m.blurb}</p>
+        <div class="stat-row"><span>${m.h.toLocaleString()} M</span><span>FA ${m.fa}</span></div>
+        <span class="explore-link">Explore full profile ↗</span>
+      </div>
+    </a>`;
+  }).join('') || `<p style="color:var(--muted)">No peaks match that search.</p>`;
+}
+
+document.getElementById('regionToggle').addEventListener('click',(e)=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  document.querySelectorAll('#regionToggle button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  currentRegion = btn.dataset.region;
+  renderMountains();
+  setMountainsClip(currentRegion);
+});
+document.getElementById('mtnSearch').addEventListener('input', renderMountains);
+document.getElementById('mtnSort').addEventListener('change', renderMountains);
+renderMountains();
+
+
+
+
+const clubList = document.getElementById('clubList');
+clubList.innerHTML = clubs.map(c=>`
+  <div class="club-item" data-lat="${c.lat}" data-lng="${c.lng}">
+    <h4>${c.name}</h4>
+    <div class="city">${c.city}</div>
+    <p>${c.blurb}</p>
+  </div>`).join('');
+
+let map, markers = [];
+function initMap(){
+  map = L.map('map', {scrollWheelZoom:false}).setView([30,40], 2);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'&copy; OpenStreetMap contributors', maxZoom:18
+  }).addTo(map);
+  clubs.forEach(c=>{
+    const m = L.marker([c.lat, c.lng]).addTo(map).bindPopup(`<b>${c.name}</b><br>${c.city}`);
+    markers.push(m);
+  });
+}
+try{
+  initMap();
+}catch(e){
+  // If the Leaflet/OpenStreetMap CDN can't be reached, don't let it take the rest of the
+  // page (gallery, visitor counter, ticker, feedback form) down with it.
+  console.warn('Club map failed to load:', e);
+  const mapEl = document.getElementById('map');
+  if(mapEl){ mapEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:13.5px;text-align:center;padding:20px;">Map unavailable right now — the club list on the right still works.</div>'; }
+}
+clubList.addEventListener('click',(e)=>{
+  const item = e.target.closest('.club-item'); if(!item) return;
+  document.querySelectorAll('.club-item').forEach(i=>i.classList.remove('active'));
+  item.classList.add('active');
+  if(!map) return; // map didn't load — the club list itself still works fine
+  const lat = parseFloat(item.dataset.lat), lng = parseFloat(item.dataset.lng);
+  map.flyTo([lat,lng], 6, {duration:1});
+  markers.forEach(m=>{
+    if(Math.abs(m.getLatLng().lat-lat)<0.01 && Math.abs(m.getLatLng().lng-lng)<0.01) m.openPopup();
+  });
+});
+
+
+const galGrid = document.getElementById('galGrid');
+galGrid.innerHTML = galleryItems.map((g,i)=>`
+  <div class="gal-tile show" data-cat="${g.cat}">
+    ${galArt(g,i)}
+    <div class="cap">${g.label}</div>
+  </div>`).join('');
+document.getElementById('galTabs').addEventListener('click',(e)=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  document.querySelectorAll('#galTabs button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const cat = btn.dataset.cat;
+  document.querySelectorAll('.gal-tile').forEach(t=>{
+    t.classList.toggle('show', cat==='all' || t.dataset.cat===cat);
+  });
+});
+
+
+mountVR('vr-mountains', 'pk',     "Pakistan's Green Valleys — KP · Gilgit-Baltistan · Azad Kashmir", 'https://plain-eeur-prod-public.komododecks.com/202608/31/oy2KypSBuqCdI4aeNDgc/image.jpg');
+mountVR('vr-clubs',     'clubs',  'Clubs near the peaks — snooker, pool & riverside', 'https://plain-eeur-prod-public.komododecks.com/202609/02/M4VZXLecIYIi7beeSmEI/image.jpg');
+mountVR('vr-gallery',   'gallery','Gallery mix — peaks, clubs & rivers', 'https://i.ibb.co/fdzYYcTg/0Tcyz.jpg');
+mountVR('vr-latest',    'winter', 'Nanga Parbat — winter ascent', 'https://i.ibb.co/W4vQK647/O5b-Vl.jpg');
+
+
+(async function visitorCounter(){
+  const el = document.getElementById('visitorCount');
+  const KEY = 'alpine-ascents-visits';
+  // A "visitor" is counted once ever per browser — not once per tab/session — so
+  // reopening or reloading the file doesn't keep inflating the number. The very
+  // first time this browser opens the page it becomes visitor 1, the next *new*
+  // browser/device to open it becomes visitor 2, and so on.
+  const VISITED_FLAG = 'alpine-ascents-visited';
+  const alreadyCountedThisBrowser = (function(){
+    try{ return localStorage.getItem(VISITED_FLAG) === 'yes'; }
+    catch(e){ return sessionStorage.getItem(VISITED_FLAG) === 'yes'; }
+  })();
+  let count = null;
+
+  // Tier 1 — shared persistent storage (works when hosted as a Claude artifact,
+  // or any environment exposing window.storage) — gives a true cross-visitor count.
+  if(window.storage && typeof window.storage.get === 'function'){
+    try{
+      let existing = null;
+      try{ existing = await window.storage.get(KEY, true); }catch(e){ existing = null; }
+      count = existing ? (parseInt(existing.value, 10) || 0) : 0;
+      if(!alreadyCountedThisBrowser){
+        count += 1;
+        await window.storage.set(KEY, String(count), true);
+      }
+    }catch(e){ count = null; }
+  }
+
+  // Tier 2 — CountAPI, a free keyless shared counter (works once this file is hosted with real internet access)
+  if(count === null){
+    try{
+      const endpoint = alreadyCountedThisBrowser
+        ? 'https://api.countapi.xyz/get/alpine-ascents-portal/visits'
+        : 'https://api.countapi.xyz/hit/alpine-ascents-portal/visits';
+      const res = await fetch(endpoint);
+      if(!res.ok) throw new Error('counter API unavailable');
+      const data = await res.json();
+      count = typeof data.value === 'number' ? data.value : null;
+    }catch(e){ count = null; }
+  }
+
+  // Tier 3 — this browser's own localStorage, so the badge never gets stuck on '—'.
+  // Opening the file again in the same browser will keep showing the same number
+  // (it only goes up when a genuinely new browser/device opens it for the first time).
+  if(count === null){
+    try{
+      count = parseInt(localStorage.getItem(KEY), 10) || 0;
+      if(!alreadyCountedThisBrowser){ count += 1; }
+      if(count < 1) count = 1;
+      localStorage.setItem(KEY, String(count));
+    }catch(e){
+      count = alreadyCountedThisBrowser ? (count || 1) : (count || 1) + 1;
+    }
+  }
+
+  if(!alreadyCountedThisBrowser){
+    try{ localStorage.setItem(VISITED_FLAG, 'yes'); }
+    catch(e){ sessionStorage.setItem(VISITED_FLAG, 'yes'); }
+  }
+  el.textContent = (count || 1).toLocaleString();
+})();
+
+
+function pad(n){return n.toString().padStart(2,'0');}
+function formatNow(){
+  const d = new Date();
+  const date = d.toLocaleDateString(undefined,{weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  const time = pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+  return {date, time};
+}
+let userLocationLabel = 'Locating…';
+
+const tickerIcons = {
+  calendar:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="1"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  clock:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
+  pin:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.9 7-12a7 7 0 1 0-14 0c0 5.1 7 12 7 12Z"/><circle cx="12" cy="9" r="2.4"/></svg>',
+  peak:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 19 9 8l4 6 2-3 6 8H3Z"/></svg>'
+};
+function buildTicker(){
+  const {date, time} = formatNow();
+  // a plain for-loop keeps this list easy to extend without touching the markup below
+  const rawItems = [
+    {icon:'calendar', text:`<b>${date}</b>`},
+    {icon:'clock', text:`<b>${time}</b>`},
+    {icon:'pin', text:`<b>${userLocationLabel}</b>`},
+    {icon:'peak', text:`K2 — <b>8,611 M</b> — Pakistan's Karakoram crown`},
+    {icon:'peak', text:`62+ peaks catalogued across world &amp; Pakistan`},
+    {icon:'peak', text:`ADVENTURE · EXTREME · FREEDOM · ALPINE LIFESTYLE · SUMMIT`},
+  ];
+  let items = [];
+  for(let i = 0; i < rawItems.length; i++){
+    items.push(`<span class="mono">${tickerIcons[rawItems[i].icon]} ${rawItems[i].text}</span>`);
+  }
+  document.getElementById('tickerTrack').innerHTML = items.join('') + items.join(''); // doubled for a seamless loop
+  document.getElementById('footClock').textContent = date + ' · ' + time;
+}
+buildTicker();
+setInterval(buildTicker, 1000);
+
+
+(function(){
+  const overlay      = document.getElementById('searchOverlay');
+  const input         = document.getElementById('siteSearchInput');
+  const resultsBox    = document.getElementById('searchResults');
+  const openBtn       = document.getElementById('searchToggle');
+  const closeBtn       = document.getElementById('searchCloseBtn');
+
+  const ROUTE_LABEL = {
+    home:'Home', about:'Mountaineering', records:'Records', mountains:'Peaks Database',
+    clubs:'Clubs & Expeditions', gallery:'Gallery', latest:'Latest Developments',
+    guidelines:'Guidelines', feedback:'Feedback'
+  };
+
+  function textOf(el){ return el ? el.textContent.replace(/\s+/g,' ').trim() : ''; }
+  function truncate(s, n){ return s.length > n ? s.slice(0, n-1).trim()+'…' : s; }
+
+  // Every top-level nav destination, so a plain "records" or "gallery" query still surfaces the page itself.
+  const PAGE_ENTRIES = [
+    {title:'Home', snippet:'Overview of the portal — dependable information for every stage of the climb.', route:'home'},
+    {title:'Mountaineering', snippet:'History, styles, techniques, sheltering and hazards of the sport.', route:'about'},
+    {title:'Records', snippet:'The marks — human and geographic — that define mountaineering history.', route:'records'},
+    {title:'Peaks Database', snippet:'62 peaks ranked by elevation, worldwide and in Pakistan.', route:'mountains'},
+    {title:'Clubs & Expeditions', snippet:'Mountaineering clubs and federations around the world, geolocated.', route:'clubs'},
+    {title:'Gallery', snippet:'Expeditions, technique, and basecamp life.', route:'gallery'},
+    {title:'Latest Developments', snippet:"What's changing in the sport right now.", route:'latest'},
+    {title:'Guidelines', snippet:'General, non-technical guidance before you rope up.', route:'guidelines'},
+    {title:'Feedback', snippet:'Tell us how the climb went.', route:'feedback'},
+  ];
+
+  function buildIndex(){
+    const idx = [];
+
+    PAGE_ENTRIES.forEach(p => idx.push({
+      title:p.title, snippet:p.snippet, tag:ROUTE_LABEL[p.route], icon:'▤',
+      go:()=> goToRoute(p.route)
+    }));
+
+    // About page — history timeline + the four grid panes (types, techniques, sheltering, hazards)
+    document.querySelectorAll('#page-about .subpane').forEach(pane=>{
+      const paneId = pane.id.replace('pane-','');
+      pane.querySelectorAll('.tl-item, .feat-card').forEach(card=>{
+        const h = card.querySelector('h4, h3'); const p = card.querySelector('p');
+        if(!h) return;
+        idx.push({
+          title:textOf(h), snippet:truncate(textOf(p),120), tag:'Mountaineering', icon:'▤', el:card,
+          go:()=>{ goToRoute('about'); switchAboutPane(paneId); highlightLater(card); }
+        });
+      });
+    });
+
+    
+    document.querySelectorAll('#page-records .record-card').forEach(card=>{
+      const lbl = card.querySelector('.lbl'); const p = card.querySelector('p');
+      idx.push({
+        title:textOf(lbl), snippet:truncate(textOf(p),120), tag:'Records', icon:'★', el:card,
+        go:()=>{ goToRoute('records'); highlightLater(card); }
+      });
+    });
+
+    
+    document.querySelectorAll('#page-guidelines .guide-item').forEach(card=>{
+      const h = card.querySelector('h4'); const p = card.querySelector('p');
+      idx.push({
+        title:textOf(h), snippet:truncate(textOf(p),120), tag:'Guidelines', icon:'✓', el:card,
+        go:()=>{ goToRoute('guidelines'); highlightLater(card); }
+      });
+    });
+    document.querySelectorAll('#page-guidelines .feat-card').forEach(card=>{
+      const h = card.querySelector('h4'); const p = card.querySelector('p');
+      idx.push({
+        title:textOf(h), snippet:truncate(textOf(p),120), tag:'Record Holders', icon:'★', el:card,
+        go:()=>{ goToRoute('guidelines'); highlightLater(card); }
+      });
+    });
+
+    
+    document.querySelectorAll('#page-latest .dev-row').forEach(card=>{
+      const h = card.querySelector('h4'); const p = card.querySelector('p'); const date = card.querySelector('.date');
+      idx.push({
+        title:textOf(h), snippet:truncate(textOf(p),120), tag:'Latest · '+textOf(date), icon:'⚑', el:card,
+        go:()=>{ goToRoute('latest'); highlightLater(card); }
+      });
+    });
+
+    
+    if(typeof clubs !== 'undefined'){
+      clubs.forEach(c=>{
+        idx.push({
+          title:c.name, snippet:truncate(c.city+' — '+c.blurb, 120), tag:'Clubs & Expeditions', icon:'⚐',
+          go:()=>{
+            goToRoute('clubs');
+            highlightLater(null, ()=>{
+              const item = Array.from(document.querySelectorAll('#page-clubs .club-item')).find(i => textOf(i.querySelector('h4')) === c.name);
+              if(item){ item.click(); item.scrollIntoView({behavior:'smooth', block:'center'}); flash(item); }
+            });
+          }
+        });
+      });
+    }
+
+    
+    if(typeof galleryItems !== 'undefined'){
+      galleryItems.forEach(g=>{
+        idx.push({
+          title:g.label, snippet:'Gallery · '+g.cat, tag:'Gallery', icon:'▦',
+          go:()=>{
+            goToRoute('gallery');
+            highlightLater(null, ()=>{
+              const allTab = document.querySelector('#galTabs button[data-cat="all"]');
+              if(allTab) allTab.click();
+              const tile = Array.from(document.querySelectorAll('#page-gallery .gal-tile')).find(t => textOf(t.querySelector('.cap')) === g.label);
+              if(tile){ tile.scrollIntoView({behavior:'smooth', block:'center'}); flash(tile); }
+            });
+          }
+        });
+      });
+    }
+
+    
+    if(typeof worldMountains !== 'undefined' && typeof pakistanMountains !== 'undefined'){
+      [['world', worldMountains], ['pakistan', pakistanMountains]].forEach(([region, list])=>{
+        list.forEach(m=>{
+          idx.push({
+            title:m.n, snippet:truncate(m.range+' · '+m.loc+' — '+m.blurb, 120),
+            tag:'Peaks Database · '+m.h.toLocaleString()+' m', icon:'▲',
+            go:()=>{
+              goToRoute('mountains');
+              highlightLater(null, ()=>{
+                const btn = document.querySelector('#regionToggle button[data-region="'+region+'"]');
+                if(btn && !btn.classList.contains('active')) btn.click();
+                input2Value('mtnSearch', m.n);
+                if(typeof renderMountains === 'function') renderMountains();
+                setTimeout(()=>{
+                  const card = Array.from(document.querySelectorAll('#mtnGrid .mtn-card')).find(c => c.dataset.name === m.n);
+                  if(card){ card.scrollIntoView({behavior:'smooth', block:'center'}); flash(card); }
+                }, 60);
+              });
+            }
+          });
+        });
+      });
+    }
+
+    return idx;
+  }
+
+  function input2Value(id, val){
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.value = val;
+    el.dispatchEvent(new Event('input', {bubbles:true}));
+  }
+
+  function switchAboutPane(paneId){
+    const btn = document.querySelector('#aboutPills button[data-pane="'+paneId+'"]');
+    if(btn) btn.click();
+  }
+
+  function flash(el){
+    if(!el) return;
+    el.classList.remove('search-flash'); void el.offsetWidth;
+    el.classList.add('search-flash');
+    setTimeout(()=> el.classList.remove('search-flash'), 1700);
+  }
+
+  function highlightLater(el, fn){
+    // Give the router's fade-in transition a moment to finish before we scroll/flash.
+    setTimeout(()=>{
+      if(fn) fn();
+      else if(el){ el.scrollIntoView({behavior:'smooth', block:'center'}); flash(el); }
+    }, 320);
+  }
+
+  function goToRoute(route){
+    history.pushState(null, '', '#'+route);
+    if(typeof showRoute === 'function') showRoute(route);
+  }
+
+  let SEARCH_INDEX = null;
+  function getIndex(){
+    if(!SEARCH_INDEX) SEARCH_INDEX = buildIndex();
+    return SEARCH_INDEX;
+  }
+
+  function highlight(text, q){
+    if(!q) return text;
+    const idx = text.toLowerCase().indexOf(q.toLowerCase());
+    if(idx === -1) return text;
+    return text.slice(0,idx) + '<mark>' + text.slice(idx, idx+q.length) + '</mark>' + text.slice(idx+q.length);
+  }
+
+  let activeIndex = -1;
+  function renderResults(q){
+    const query = q.trim().toLowerCase();
+    if(!query){
+      resultsBox.innerHTML = '<div class="search-hint">Start typing to search the whole portal — peaks, ranges, countries, clubs, gallery, guidelines and more.</div>';
+      activeIndex = -1;
+      return;
+    }
+    const matches = getIndex().filter(item =>
+      (item.title+' '+item.snippet+' '+(item.tag||'')).toLowerCase().includes(query)
+    ).slice(0, 40);
+
+    if(!matches.length){
+      resultsBox.innerHTML = '<div class="search-empty">No results for "'+query.replace(/</g,'')+'". Try a peak, range, country, or club name.</div>';
+      activeIndex = -1;
+      return;
+    }
+
+    resultsBox.innerHTML = matches.map((item,i)=>`
+      <button type="button" class="search-result" data-idx="${i}">
+        <span class="sr-icon">${item.icon||'▤'}</span>
+        <span class="sr-body">
+          <p class="sr-title">${highlight(item.title, query)}</p>
+          <p class="sr-snippet">${highlight(item.snippet, query)}</p>
+          ${item.tag ? `<span class="sr-tag">${item.tag}</span>` : ''}
+        </span>
+      </button>`).join('');
+
+    resultsBox.querySelectorAll('.search-result').forEach((btn,i)=>{
+      btn.addEventListener('click', ()=>{ matches[i].go(); closeSearch(); });
+      btn.addEventListener('mouseenter', ()=>{ setActive(i); });
+    });
+    activeIndex = -1;
+    resultsBox._matches = matches;
+  }
+
+  function setActive(i){
+    const items = resultsBox.querySelectorAll('.search-result');
+    items.forEach(el=>el.classList.remove('active'));
+    if(i>=0 && i<items.length){
+      items[i].classList.add('active');
+      items[i].scrollIntoView({block:'nearest'});
+      activeIndex = i;
+    }
+  }
+
+  function openSearch(){
+    overlay.classList.add('open');
+    input.value = '';
+    renderResults('');
+    setTimeout(()=> input.focus(), 30);
+  }
+  function closeSearch(){
+    overlay.classList.remove('open');
+  }
+
+  openBtn.addEventListener('click', openSearch);
+  closeBtn.addEventListener('click', closeSearch);
+  overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeSearch(); });
+  input.addEventListener('input', ()=> renderResults(input.value));
+
+  input.addEventListener('keydown', (e)=>{
+    const items = resultsBox.querySelectorAll('.search-result');
+    if(e.key === 'ArrowDown'){ e.preventDefault(); setActive(Math.min(activeIndex+1, items.length-1)); }
+    else if(e.key === 'ArrowUp'){ e.preventDefault(); setActive(Math.max(activeIndex-1, 0)); }
+    else if(e.key === 'Enter'){
+      e.preventDefault();
+      const matches = resultsBox._matches || [];
+      const pick = activeIndex >= 0 ? matches[activeIndex] : matches[0];
+      if(pick){ pick.go(); closeSearch(); }
+    } else if(e.key === 'Escape'){ closeSearch(); }
+  });
+
+  document.addEventListener('keydown', (e)=>{
+    if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k'){
+      e.preventDefault();
+      overlay.classList.contains('open') ? closeSearch() : openSearch();
+    } else if(e.key === 'Escape' && overlay.classList.contains('open')){
+      closeSearch();
+    }
+  });
+})();
+
+
+const FB_KEY = 'alpine-ascents-feedback';
+
+function getSessionFeedback(){
+  const raw = sessionStorage.getItem(FB_KEY);
+  return raw ? JSON.parse(raw) : [];
+}
+
+function renderFeedbackList(){
+  const items = getSessionFeedback();
+  const $list = $('#fbList');
+  const $empty = $('#fbEmpty');
+  $list.empty();
+  if(items.length === 0){
+    $empty.show();
+    return;
+  }
+  $empty.hide();
+  for(let i = items.length - 1; i >= 0; i--){
+    const it = items[i];
+    $list.append(`<li><b>${it.subject}</b>${it.name} — <span>${it.time}</span></li>`);
+  }
+}
+
+$(function(){
+  renderFeedbackList();
+
+  $('#feedbackForm').on('submit', function(e){
+    e.preventDefault();
+    const form = this;
+    const name = $('#fbName').val().trim();
+    const email = $('#fbEmail').val().trim();
+    const subject = $('#fbSubject').val();
+    const message = $('#fbMessage').val().trim();
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Letters are mandatory in the name; digits are fine alongside letters, just not on their own.
+    const namePattern = /[A-Za-z\u00C0-\u017F]/;
+
+    let valid = true;
+    if(name.length < 2 || !namePattern.test(name)){ valid = false; }
+    else if(!emailPattern.test(email)){ valid = false; }
+    else if(!subject){ valid = false; }
+    else if(message.length < 10){ valid = false; }
+
+    form.classList.add('was-validated');
+    const $status = $('#fbStatus');
+
+    if(!valid){
+      $status.removeClass('ok').addClass('err').hide().text('Please fix the highlighted fields before saving.').fadeIn(200);
+      return;
+    }
+
+    // valid — save this entry into the current browser session only
+    const items = getSessionFeedback();
+    items.push({name, email, subject, message, time: new Date().toLocaleTimeString()});
+    sessionStorage.setItem(FB_KEY, JSON.stringify(items));
+    renderFeedbackList();
+
+    $status.removeClass('err').addClass('ok').hide().text('Saved — thank you for the feedback.').fadeIn(200).delay(2200).fadeOut(400);
+    form.reset();
+    form.classList.remove('was-validated');
+  });
+
+  $('#fbClose').on('click', function(){
+    const $form = $('#feedbackForm');
+    $form.fadeOut(180, function(){
+      this.reset();
+      this.classList.remove('was-validated');
+      $('#fbStatus').text('');
+      $(this).fadeIn(220);
+    });
+  });
+});
+
+
+function subscribeToAlerts(){
+  const email = prompt('Enter your email to get new-record and expedition alerts:');
+  if(email === null){
+    return; // visitor cancelled
+  }
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if(email.trim() === '' || !emailPattern.test(email.trim())){
+    alert('That doesn\'t look like a valid email — nothing was saved.');
+  } else {
+    const subs = JSON.parse(sessionStorage.getItem('alpine-ascents-subs') || '[]');
+    subs.push(email.trim());
+    sessionStorage.setItem('alpine-ascents-subs', JSON.stringify(subs));
+    alert('Thanks — you\'re on the list for this session\'s demo.');
+  }
+}
+
+if('geolocation' in navigator){
+  navigator.geolocation.getCurrentPosition(async (pos)=>{
+    const {latitude, longitude} = pos.coords;
+    try{
+      const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+      const data = await res.json();
+      userLocationLabel = [data.city || data.locality, data.countryName].filter(Boolean).join(', ') || `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
+    }catch(e){
+      userLocationLabel = `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
+    }
+  }, ()=>{ userLocationLabel = 'Location unavailable'; }, {timeout:8000});
+} else {
+  userLocationLabel = 'Geolocation not supported';
+}
+
+
+</script>
+<script> window.chtlConfig = { chatbotId: "2516968413" } </script>
+<script async data-id="2516968413" id="chtl-script" type="text/javascript" src="https://chatling.ai/js/embed.js"></script>
+</body>
+</html>
